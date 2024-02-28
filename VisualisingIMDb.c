@@ -80,6 +80,8 @@ typedef struct {
     We need a custom dataset with
     name, connections, titles, date born, date died, recognisability, primarygenre, primarygenre(number)
     
+    Revised:
+    name, primaryGenre, date born, recognisability, connections
     
     
     
