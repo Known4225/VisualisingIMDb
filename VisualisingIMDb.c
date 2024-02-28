@@ -83,6 +83,7 @@ typedef struct {
     Revised:
     name, primaryGenre, date born, recognisability, connections
     
+    There are 181,000 actors to plot.
     
     
     
