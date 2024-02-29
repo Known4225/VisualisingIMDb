@@ -86,7 +86,9 @@ typedef struct {
     list_t *nodes; // spec: ID, name, list of connections (ID)
     int highlight; // for selecting a single person
     int genreHighlight; // for selecting a genre
+    int genreLocked; // for locking a highlight
     int bounds[4];
+    int legendBounds[2]; // legend x bounds
     int leftYear;
     int rightYear;
     /* mouse */
@@ -172,10 +174,13 @@ void init(visual *parentp) {
     /* graph */
     graph -> highlight = -1;
     graph -> genreHighlight = -1;
+    graph -> genreLocked = 0;
     graph -> bounds[0] = -310;
     graph -> bounds[1] = -100;
     graph -> bounds[2] = 310;
     graph -> bounds[3] = 100;
+    graph -> legendBounds[0] = 220;
+    graph -> legendBounds[1] = 320;
     graph ->leftYear = 1870;
     graph -> rightYear = 2005;
 
@@ -266,9 +271,9 @@ void init(visual *parentp) {
     list_append(parent.genreColour, (unitype) 41, 'i');
     list_append(parent.genreColour, (unitype) 79, 'i');
 
-    list_append(parent.genreColour, (unitype) 32, 'i'); // Crime #201923
-    list_append(parent.genreColour, (unitype) 25, 'i');
-    list_append(parent.genreColour, (unitype) 35, 'i');
+    list_append(parent.genreColour, (unitype) 72, 'i'); // Crime #201923
+    list_append(parent.genreColour, (unitype) 65, 'i');
+    list_append(parent.genreColour, (unitype) 75, 'i');
 
     list_append(parent.genreColour, (unitype) 14, 'i'); // Adventure #0ec434
     list_append(parent.genreColour, (unitype) 196, 'i');
@@ -780,7 +785,6 @@ void renderGraph(visual *parentp) {
                 if (j == parent.selectedIDs -> data[k].i) {
                     node_t node = *((node_t *) (graph.nodes -> data[j].p));
                     
-
                     /* gather genre histogram */
                     if (node.genre != -1) {
                         parent.genreHistogram -> data[node.genre].i++;
@@ -798,20 +802,22 @@ void renderGraph(visual *parentp) {
                     }
                     double realSize = node.size * 4 * graph.globalsize;
                     /* get hover*/
-                    if ((calcX - parent.mouseX) * (calcX - parent.mouseX) + (calcY - parent.mouseY) * (calcY - parent.mouseY) < realSize * realSize * 0.25) {
-                        graph.hover = j;
-                    }
-                    if (calcX + realSize > -330 && calcX - realSize < 330 && calcY + realSize > -190 && calcY - realSize < 190) {
-                        turtleGoto(calcX, calcY);
-                        turtlePenColorAlpha(node.colour[0], node.colour[1], node.colour[2], 50);
-                        turtlePenSize(realSize);
-                        turtlePenDown();
-                        turtlePenUp();
-                    }
-                    if (realSize > 15 || j == graph.highlight || j == graph.hover) {
-                        if (calcX > -350 && calcX < 350 && calcY > -190 && calcY < 190) {
-                            turtlePenColor(parent.colours[6], parent.colours[7], parent.colours[8]);
-                            textGLWriteUnicode(node.name, calcX, calcY, 5, 50);
+                    if (graph.genreHighlight == -1 || graph.genreHighlight == node.genre) {
+                        if (parent.mouseX < graph.legendBounds[0] && ((calcX - parent.mouseX) * (calcX - parent.mouseX) + (calcY - parent.mouseY) * (calcY - parent.mouseY) < realSize * realSize * 0.25)) {
+                            graph.hover = j;
+                        }
+                        if (calcX + realSize > -330 && calcX - realSize < 330 && calcY + realSize > -190 && calcY - realSize < 190) {
+                            turtleGoto(calcX, calcY);
+                            turtlePenColorAlpha(node.colour[0], node.colour[1], node.colour[2], 50);
+                            turtlePenSize(realSize);
+                            turtlePenDown();
+                            turtlePenUp();
+                        }
+                        if (realSize > 15 || j == graph.highlight || j == graph.hover) {
+                            if (calcX > -350 && calcX < 350 && calcY > -190 && calcY < 190) {
+                                turtlePenColor(parent.colours[6], parent.colours[7], parent.colours[8]);
+                                textGLWriteUnicode(node.name, calcX, calcY, 5, 50);
+                            }
                         }
                     }
                     k++;
@@ -846,7 +852,7 @@ void renderTimeline(visual *parentp) {
         } else {
             dist = 1;
         }
-        while (xpos < 260) {
+        while (xpos < self.legendBounds[0]) {
             if (currentTickYear % dist == 0) {
                 if (dist == 1) {
                     if (currentTickYear % 5 == 0) {
@@ -878,14 +884,14 @@ void renderLegend(visual *parentp) {
     visual parent = *parentp;
     graph_node_t self = *((graph_node_t *) (parent.graphs -> data[0].p));
     if (1) { // right side
-        turtleQuad(220, -180, 320, -180, 320, 180, 220, 180, parent.colours[9], parent.colours[10], parent.colours[11], 0);
+        turtleQuad(self.legendBounds[0], -180, self.legendBounds[1], -180, self.legendBounds[1], 180, self.legendBounds[0], 180, parent.colours[9], parent.colours[10], parent.colours[11], 0);
         turtlePenColor(parent.colours[6], parent.colours[7], parent.colours[8]);
         textGLWriteString("Legend", 270, 160, 10, 50);
         textGLWriteString("<- Birth Year", 270, -170, 7, 50);
 
         /* render stacked genre bars */
         double scale = (100.0 / parent.selectedIDs -> length);
-        double leftX = 240;
+        double leftX = self.legendBounds[0] + 20;
         double rightX = 300;
         double topY = 140;
         double localMin;
@@ -905,15 +911,54 @@ void renderLegend(visual *parentp) {
             tempList -> data[maxInd].i = -1;
             list_append(genreSort, (unitype) maxInd, 'i');
         }
+        int textQue = -1;
+        double midY;
         for (int i = 0; i < parent.genreHistogram -> length; i++) {
             localMin = topY - parent.genreHistogram -> data[genreSort -> data[i].i].i * scale;
             turtleQuad(leftX, topY, leftX, localMin, rightX, localMin, rightX, topY, 
             parent.genreColour -> data[genreSort -> data[i].i * 3].i, parent.genreColour -> data[genreSort -> data[i].i * 3 + 1].i, parent.genreColour -> data[genreSort -> data[i].i * 3 + 2].i, 0);
+            if (topY - localMin > 8) {
+                if (genreSort -> data[i].i == 3) {
+                    turtlePenColor(10, 10, 10);
+                } else {
+                    turtlePenColor(parent.colours[6], parent.colours[7], parent.colours[8]);
+                }
+                textGLWriteString(parent.genreList -> data[genreSort -> data[i].i].s, leftX + (rightX - leftX) / 2, localMin + (topY - localMin) / 2, 6, 50);
+                
+            }
+            if (parent.mouseX >= leftX && parent.mouseX <= rightX && parent.mouseY >= localMin && parent.mouseY < topY) {
+                textQue = genreSort -> data[i].i;
+                midY = localMin + (topY - localMin) / 2;
+            }
+            if (self.genreLocked == 1 && self.genreHighlight == genreSort -> data[i].i) {
+                turtlePenColor(parent.colours[6], parent.colours[7], parent.colours[8]);
+                textGLWriteString(parent.genreList -> data[genreSort -> data[i].i].s, leftX - 4, localMin + (topY - localMin) / 2, 6, 100);
+                turtleTriangle(rightX, localMin + (topY - localMin) / 2, rightX + 5, localMin + (topY - localMin) / 2 - 5, rightX + 5, localMin + (topY - localMin) / 2 + 5,
+                parent.genreColour -> data[genreSort -> data[i].i * 3].i, parent.genreColour -> data[genreSort -> data[i].i * 3 + 1].i, parent.genreColour -> data[genreSort -> data[i].i * 3 + 2].i, 0);
+            }
             topY = localMin;
+        }
+        if (textQue > -1) {
+            turtlePenColor(parent.colours[6], parent.colours[7], parent.colours[8]);
+            textGLWriteString(parent.genreList -> data[textQue].s, leftX - 4, midY, 6, 100);
+            turtleTriangle(rightX, midY, rightX + 5, midY - 5, rightX + 5, midY + 5,
+            parent.genreColour -> data[textQue * 3].i, parent.genreColour -> data[textQue * 3 + 1].i, parent.genreColour -> data[textQue * 3 + 2].i, 0);
+            if (self.genreLocked == 0) {
+                self.genreHighlight = textQue;
+            }
+            if (turtleMouseDown()) {
+                self.genreLocked = 1;
+            }
+        } else {
+            if (self.genreLocked == 0) {
+                self.genreHighlight = -1;
+            }
         }
         list_free(genreSort);
         list_free(tempList);
     }
+    *((graph_node_t *) (parent.graphs -> data[0].p)) = self;
+    *parentp = parent;
 }
 
 void highlightNode(visual *parentp) {
@@ -972,12 +1017,17 @@ void mouseTick(visual *parentp) {
     if (turtleMouseDown()) {
         if (parent.keys[0] == 0) {
             /* first tick */
-            parent.keys[0] = 1;
-            self.focalX = parent.mouseX;
-            self.focalY = parent.mouseY;
-            self.focalCSX = self.screenX;
-            self.focalCSY = self.screenY;
-        } else {
+            if (parent.mouseX < self.legendBounds[0]) {
+                parent.keys[0] = 1;
+                self.focalX = parent.mouseX;
+                self.focalY = parent.mouseY;
+                self.focalCSX = self.screenX;
+                self.focalCSY = self.screenY;
+            } else {
+                self.genreLocked = 0;
+                parent.keys[0] = 3;
+            }
+        } else if (parent.keys[0] < 3) {
             self.screenX = (parent.mouseX - self.focalX) / self.globalsize + self.focalCSX;
             self.screenY = (parent.mouseY - self.focalY) / self.globalsize + self.focalCSY;
             if (fabs(parent.mouseX - self.focalX) > 0.1 && fabs(parent.mouseY - self.focalY) > 0.1) {
@@ -991,6 +1041,8 @@ void mouseTick(visual *parentp) {
                 /* highlight */
                 highlightNode(&parent);
                 self.highlight = self.hover;
+                self.genreHighlight = -1;
+                self.genreLocked = 0;
             }
         }
     }
