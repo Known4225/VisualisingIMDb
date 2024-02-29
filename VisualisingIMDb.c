@@ -1,6 +1,6 @@
 /* select OS */
-#define OS_WINDOWS
-// #define OS_LINUX
+// #define OS_WINDOWS
+#define OS_LINUX
 
 
 /*
@@ -138,11 +138,14 @@ void init(visual *parentp) {
     srand(time(NULL));
     visual parent = *parentp;
     parent.parallax = 0;
-    parent.renderConnections = 1;
+    parent.renderConnections = 0;
     parent.fileList = list_init();
     parent.columns = list_init();
     parent.selectedIDs = list_init();
     parent.genreHistogram = list_init();
+    for (int i = 0; i < 12; i++) {
+        parent.keys[i] = 0;
+    }
     for (int i = 0; i < 30; i++) {
         list_append(parent.genreHistogram, (unitype) 0, 'i');
     }
@@ -169,11 +172,11 @@ void init(visual *parentp) {
     /* graph */
     graph -> highlight = -1;
     graph -> genreHighlight = -1;
-    graph -> bounds[0] = -320;
-    graph -> bounds[1] = -180;
-    graph -> bounds[2] = 320;
-    graph -> bounds[3] = 180;
-    graph ->leftYear = 1820;
+    graph -> bounds[0] = -310;
+    graph -> bounds[1] = -100;
+    graph -> bounds[2] = 310;
+    graph -> bounds[3] = 100;
+    graph ->leftYear = 1870;
     graph -> rightYear = 2005;
 
     list_append(parent.graphs, (unitype) (void *) graph, 'p');
@@ -351,7 +354,6 @@ void generateNodes(visual *parentp) {
 
     /* set up loading bar */
     long long nextThresh = parent.columns -> data[0].r -> length / parent.loadingSegments;
-    long long lineLength = 1000;
     long long threshLoaded = 1;
     long long iters = 0;
     turtlePenColor(0, 0, 0);
@@ -405,7 +407,7 @@ void generateNodes(visual *parentp) {
     list_t *connections = parent.columns -> data[5].r; // convert to list
     for (int i = 1; i < connections -> length; i++) {
         if (iters > nextThresh) {
-            printf("processed %lld/%lld lines\n", iters, connections -> length); // this is just an estimation, it is not 100% accurate
+            printf("processed %lld/%i lines\n", iters, connections -> length); // this is just an estimation, it is not 100% accurate
             if (threshLoaded <= parent.loadingSegments) {
                 turtleGoto(620 / parent.loadingSegments * threshLoaded - 310, 160);
                 turtlePenUp();
@@ -500,7 +502,7 @@ void generateNodes(visual *parentp) {
         free(toFree);
     }
 
-    double alphaTune = -0.005;
+    // double alphaTune = -0.005;
     double cycle = 0;
     graph_node_t *canvas = ((graph_node_t *) parent.graphs -> data[0].p);
     list_t *nodeGraph = canvas -> nodes;
@@ -510,9 +512,9 @@ void generateNodes(visual *parentp) {
         newNode -> ID = i;
         // newNode -> size = 0.5 / (1 + pow(2.718281, alphaTune * (recognisability -> data[i].d - averageRecognisability)));
         newNode -> size = recognisability -> data[i].d * 0.1 / averageRecognisability;
-        newNode -> xpos = (birthYear -> data[i].i - canvas -> leftYear) * ((canvas -> bounds[2] - canvas -> bounds[0]) / (canvas -> rightYear - canvas -> leftYear)) + canvas -> bounds[0] + (rand() % 20 - 10);
-        if (cycle > (canvas -> maxY - 100) - newNode -> size / 2 * 1.1) {
-            cycle = (canvas -> minY + 100) + newNode -> size / 2 * 1.1;
+        newNode -> xpos = (birthYear -> data[i].i - canvas -> leftYear) * ((double) (canvas -> bounds[2] - canvas -> bounds[0]) / (canvas -> rightYear - canvas -> leftYear)) + canvas -> bounds[0] + (rand() % 10 - 5);
+        if (cycle > (canvas -> maxY + canvas -> bounds[1]) - newNode -> size / 2 * 1.1) {
+            cycle = (canvas -> minY + canvas -> bounds[3]) + newNode -> size / 2 * 1.1;
         }
         newNode -> ypos = cycle;
         cycle += newNode -> size * 1.2;
@@ -825,16 +827,50 @@ void renderTimeline(visual *parentp) {
     visual parent = *parentp;
     graph_node_t self = *((graph_node_t *) (parent.graphs -> data[0].p));
     if (1) { // bottom
-        turtleQuad(-320, -180, 320, -180, 320, -160, -320, -160, parent.colours[12], parent.colours[13], parent.colours[14], 0);
+        turtleQuad(-320, -185, 320, -185, 320, -160, -320, -160, parent.colours[12], parent.colours[13], parent.colours[14], 150);
         turtlePenColor(parent.colours[15], parent.colours[16], parent.colours[17]);
         /* render ticks */
-        double timeScale = (self.rightYear - self.leftYear) * self.globalsize;
-        double leftEdge = self.leftYear + (self.screenX * timeScale);
-        double rightEdge = self.rightYear + (self.screenX * timeScale);
-        for (int i = 0; i < 12; i++) {
-            // turtleQuad();
+        double midYear = (self.leftYear + self.rightYear) / 2.0;
+        double timeScale = (double) (self.rightYear - self.leftYear) / (self.bounds[2] - self.bounds[0]);
+        double leftEdge = midYear + ((-self.screenX - 320 / self.globalsize) * timeScale);
+        double rightEdge = midYear + ((-self.screenX + 320 / self.globalsize) * timeScale);
+        double xpos = (ceil(leftEdge) - leftEdge) * (1 / timeScale) * self.globalsize - 320;
+        int currentTickYear = ceil(leftEdge);
+        double topY;
+        double tickWidth = 0.2;
+        int dist;
+        if (self.globalsize < 0.8) {
+            dist = 100;
+        } else if (self.globalsize < 16) {
+            dist = 5;
+        } else {
+            dist = 1;
         }
-        
+        while (xpos < 260) {
+            if (currentTickYear % dist == 0) {
+                if (dist == 1) {
+                    if (currentTickYear % 5 == 0) {
+                        topY = -172;
+                    } else {
+                        topY = -174;
+                    }
+                } else {
+                    topY = -172;
+                }
+                char year[12];
+                sprintf(year, "%d", currentTickYear);
+                textGLWriteString(year, xpos, topY + 5, 6, 50);
+            } else {
+                if (dist == 100 && currentTickYear % 5 == 0) {
+                    topY = -174;
+                } else {
+                    topY = -176;
+                }
+            }
+            turtleQuad(xpos, -180, xpos + tickWidth, -180, xpos + tickWidth, topY, xpos, topY, parent.colours[15], parent.colours[16], parent.colours[17], 0);
+            xpos += 1 / timeScale * self.globalsize;
+            currentTickYear++;
+        }
     }
 }
 
@@ -845,6 +881,7 @@ void renderLegend(visual *parentp) {
         turtleQuad(220, -180, 320, -180, 320, 180, 220, 180, parent.colours[9], parent.colours[10], parent.colours[11], 0);
         turtlePenColor(parent.colours[6], parent.colours[7], parent.colours[8]);
         textGLWriteString("Legend", 270, 160, 10, 50);
+        textGLWriteString("<- Birth Year", 270, -170, 7, 50);
 
         /* render stacked genre bars */
         double scale = (100.0 / parent.selectedIDs -> length);
@@ -858,8 +895,8 @@ void renderLegend(visual *parentp) {
         list_t *genreSort = list_init();
         for (int i = 0; i < tempList -> length; i++) {
             int max = -1;
-            int maxInd = i;
-            for (int j = i; j < tempList -> length; j++) {
+            int maxInd = 0;
+            for (int j = 0; j < tempList -> length; j++) {
                 if (tempList -> data[j].i > max) {
                     max = tempList -> data[j].i;
                     maxInd = j;
@@ -963,6 +1000,7 @@ void mouseTick(visual *parentp) {
 
 void hotkeyTick(visual *parentp) {
     visual parent = *parentp;
+    graph_node_t self = *((graph_node_t *) (parent.graphs -> data[0].p));
     if (turtleKeyPressed(GLFW_KEY_SPACE)) {
         if (parent.keys[2] == 0) {
             parent.keys[2] = 1;
@@ -987,6 +1025,16 @@ void hotkeyTick(visual *parentp) {
     } else {
         parent.keys[3] = 0;
     }
+    if (turtleKeyPressed(GLFW_KEY_A)) {
+        if (parent.keys[4] == 0) {
+            parent.keys[4] = 1;
+            self.screenX = 0;
+            self.globalsize = 1;
+        }
+    } else {
+        parent.keys[4] = 0;
+    }
+    *((graph_node_t *) parent.graphs -> data[0].p) = self;
     *parentp = parent;
 }
 
@@ -1017,6 +1065,7 @@ void scrollTick(visual *parentp) {
 }
 
 void parseRibbonOutput(visual *selfp) {
+    #ifdef OS_WINDOWS
     visual self = *selfp;
     if (ribbonRender.output[0] == 1) {
         ribbonRender.output[0] = 0; // untoggle
@@ -1053,6 +1102,7 @@ void parseRibbonOutput(visual *selfp) {
         }
     }
     *selfp = self;
+    #endif
 }
 
 int main(int argc, char *argv[]) {
