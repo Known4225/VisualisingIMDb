@@ -6,7 +6,7 @@
 /*
 TODO:
 Fix legend
-
+Hover legend
 
 
 
@@ -84,7 +84,11 @@ typedef struct {
     double maxY;
     /* graph */
     list_t *nodes; // spec: ID, name, list of connections (ID)
-    int highlight;
+    int highlight; // for selecting a single person
+    int genreHighlight; // for selecting a genre
+    int bounds[4];
+    int leftYear;
+    int rightYear;
     /* mouse */
     double screenX;
     double screenY;
@@ -161,7 +165,16 @@ void init(visual *parentp) {
     graph -> screenY = 0;
     graph -> scrollSpeed = 1.15;
     graph -> hover = -1;
+
+    /* graph */
     graph -> highlight = -1;
+    graph -> genreHighlight = -1;
+    graph -> bounds[0] = -320;
+    graph -> bounds[1] = -180;
+    graph -> bounds[2] = 320;
+    graph -> bounds[3] = 180;
+    graph ->leftYear = 1820;
+    graph -> rightYear = 2005;
 
     list_append(parent.graphs, (unitype) (void *) graph, 'p');
 
@@ -173,8 +186,8 @@ void init(visual *parentp) {
         70, 70, 70, // axis colour
         250, 250, 250, // text colour
         10, 10, 10, // legend bar colour
-        0, 0, 0, // free colours
-        0, 0, 0,
+        10, 10, 10, // timeline base
+        230, 230, 230, // timeline ticks/text
         0, 0, 0,
         0, 0, 0,
         0, 0, 0,
@@ -497,7 +510,7 @@ void generateNodes(visual *parentp) {
         newNode -> ID = i;
         // newNode -> size = 0.5 / (1 + pow(2.718281, alphaTune * (recognisability -> data[i].d - averageRecognisability)));
         newNode -> size = recognisability -> data[i].d * 0.1 / averageRecognisability;
-        newNode -> xpos = (birthYear -> data[i].i - 1820) * (620 / (2005 - 1820)) - 310 + (rand() % 20 - 10);
+        newNode -> xpos = (birthYear -> data[i].i - canvas -> leftYear) * ((canvas -> bounds[2] - canvas -> bounds[0]) / (canvas -> rightYear - canvas -> leftYear)) + canvas -> bounds[0] + (rand() % 20 - 10);
         if (cycle > (canvas -> maxY - 100) - newNode -> size / 2 * 1.1) {
             cycle = (canvas -> minY + 100) + newNode -> size / 2 * 1.1;
         }
@@ -676,36 +689,40 @@ void renderConnections(visual *parentp) {
             // printf("iter: %d\n", i);
             if (i == self.highlight || self.highlight == -1) {
                 node_t node = *((node_t *) (self.nodes -> data[i].p));
-                double anchorX;
-                double anchorY;
-                if (parent.parallax) {
-                    anchorX = (node.xpos + self.screenX) * self.globalsize * node.size;;
-                    anchorY = (node.ypos + self.screenY) * self.globalsize * node.size;; 
-                } else {
-                    anchorX = (node.xpos + self.screenX) * self.globalsize;
-                    anchorY = (node.ypos + self.screenY) * self.globalsize; 
-                }
-                if (self.highlight != -1 || (anchorX > -330 && anchorX < 330 && anchorY > -190 && anchorY < 190)) {
-                    turtlePenColor(node.colour[0], node.colour[1], node.colour[2]);
-                    for (int j = 1; j < node.connections -> length; j += 2) {
-                        double destX;
-                        double destY;
-                        if (parent.parallax) {
-                            destX = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> xpos + self.screenX) * self.globalsize * ((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> size;
-                            destY = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> ypos + self.screenY) * self.globalsize * ((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> size;
-                        } else {
-                            destX = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> xpos + self.screenX) * self.globalsize;
-                            destY = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> ypos + self.screenY) * self.globalsize;
+                if (self.genreHighlight == -1 || self.genreHighlight == node.genre) {
+                    double anchorX;
+                    double anchorY;
+                    if (parent.parallax) {
+                        anchorX = (node.xpos + self.screenX) * self.globalsize * node.size;;
+                        anchorY = (node.ypos + self.screenY) * self.globalsize * node.size;; 
+                    } else {
+                        anchorX = (node.xpos + self.screenX) * self.globalsize;
+                        anchorY = (node.ypos + self.screenY) * self.globalsize; 
+                    }
+                    if (self.highlight != -1 || (anchorX > -330 && anchorX < 330 && anchorY > -190 && anchorY < 190)) {
+                        turtlePenColor(node.colour[0], node.colour[1], node.colour[2]);
+                        for (int j = 1; j < node.connections -> length; j += 2) {
+                            if (self.genreHighlight == -1 || self.genreHighlight == ((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> genre) {
+                                double destX;
+                                double destY;
+                                if (parent.parallax) {
+                                    destX = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> xpos + self.screenX) * self.globalsize * ((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> size;
+                                    destY = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> ypos + self.screenY) * self.globalsize * ((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> size;
+                                } else {
+                                    destX = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> xpos + self.screenX) * self.globalsize;
+                                    destY = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> ypos + self.screenY) * self.globalsize;
+                                }
+                                if (self.highlight == -1) {
+                                    turtle.pena = (100 - node.connections -> data[j - 1].i) / 100.0; // scale alpha according to strength of connection
+                                } else {
+                                    turtle.pena = (100 - node.connections -> data[j - 1].i) / 120.0; // more visible for small networks
+                                }
+                                turtleGoto(anchorX, anchorY);
+                                turtlePenDown();
+                                turtleGoto(destX, destY);
+                                turtlePenUp();
+                            }
                         }
-                        if (self.highlight == -1) {
-                            turtle.pena = (100 - node.connections -> data[j - 1].i) / 100.0; // scale alpha according to strength of connection
-                        } else {
-                            turtle.pena = (100 - node.connections -> data[j - 1].i) / 120.0; // more visible for small networks
-                        }
-                        turtleGoto(anchorX, anchorY);
-                        turtlePenDown();
-                        turtleGoto(destX, destY);
-                        turtlePenUp();
                     }
                 }
             }
@@ -805,7 +822,20 @@ void renderGraph(visual *parentp) {
 }
 
 void renderTimeline(visual *parentp) {
-
+    visual parent = *parentp;
+    graph_node_t self = *((graph_node_t *) (parent.graphs -> data[0].p));
+    if (1) { // bottom
+        turtleQuad(-320, -180, 320, -180, 320, -160, -320, -160, parent.colours[12], parent.colours[13], parent.colours[14], 0);
+        turtlePenColor(parent.colours[15], parent.colours[16], parent.colours[17]);
+        /* render ticks */
+        double timeScale = (self.rightYear - self.leftYear) * self.globalsize;
+        double leftEdge = self.leftYear + (self.screenX * timeScale);
+        double rightEdge = self.rightYear + (self.screenX * timeScale);
+        for (int i = 0; i < 12; i++) {
+            // turtleQuad();
+        }
+        
+    }
 }
 
 void renderLegend(visual *parentp) {
@@ -835,7 +865,7 @@ void renderLegend(visual *parentp) {
                     maxInd = j;
                 }
             }
-            tempList -> data[maxInd].i = 0;
+            tempList -> data[maxInd].i = -1;
             list_append(genreSort, (unitype) maxInd, 'i');
         }
         for (int i = 0; i < parent.genreHistogram -> length; i++) {
