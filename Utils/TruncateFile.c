@@ -107,71 +107,22 @@ int truncate(visual *selfp, char *filename) {
         list_t *stringify = list_init();
         int index = 0;
         char read = '\0';
-        char *tempStr;
-        while (read != '\n' && fscanf(fp, "%c", &read) != EOF) {
-            if (read == '\t') {
-                list_append(columns, (unitype) list_init(), 'r');
-                tempStr = list_to_string(stringify);
-                list_append(columns -> data[index].r, (unitype) tempStr, 's');
-                fprintf(fpwr, "%s%c", tempStr, '\t');
-                free(tempStr);
-                stringify -> length = 0; // this should work
-            } else {
-                list_append(stringify, (unitype) read, 'c');
-            }
-        }
-        list_pop(stringify); // delete newline
-        list_append(columns, (unitype) list_init(), 'r');
-        tempStr = list_to_string(stringify);
-        list_append(columns -> data[index].r, (unitype) tempStr, 's');
-        fprintf(fpwr, "%s%c", tempStr, '\n');
-        free(tempStr);
-        stringify -> length = 0;
-        index++;
-        lineLength = ftello(fp); // record data from after first line
-        read = '\0';
 
-
-        // estimate line length
-        while (read != '\n' && fscanf(fp, "%c", &read) != EOF) {
-            if (read == '\t') {
-                tempStr = list_to_string(stringify);
-                list_append(columns -> data[index].r, (unitype) tempStr, 's');
-                fprintf(fpwr, "%s%c", tempStr, '\t');
-                free(tempStr);
-                stringify -> length = 0;
-            } else {
-                list_append(stringify, (unitype) read, 'c');
-            }
-        }
-        list_pop(stringify); // delete newline
-        tempStr = list_to_string(stringify);
-        list_append(columns -> data[index].r, (unitype) tempStr, 's');
-        fprintf(fpwr, "%s%c", tempStr, '\n');
-        free(tempStr);
-        stringify -> length = 0;
-        index++;
-        lineLength = ftello(fp) - lineLength; /*  we use the first row to estimate the number of lines, but this is not optimal.
-        but it's really just dependends on how representative the first row is of the lengths of all the others */
-        printf("line length: %lld\n", lineLength);
-        nextThresh = fileSize / self.loadingSegmentsI / lineLength;
-        read = '\0';
-
-        // read the rest
+        // read
         while (fscanf(fp, "%c", &read) != EOF) {
             if (read == '\n') {
+                // printf("iter %d\n", iters);
                 // end of line
                 char *tempStr = list_to_string(stringify);
-                list_append(columns -> data[index].r, (unitype) tempStr, 's');
                 fprintf(fpwr, "%s%c", tempStr, '\n');
                 free(tempStr);
-                stringify -> length = 0;
+                list_clear(stringify);
                 index = 0;
                 iters++;
             } else if (read == '\t') {
+                // printf("made it\n");
                 // end of column
                 char *tempStr = list_to_string(stringify);
-                list_append(columns -> data[index].r, (unitype) tempStr, 's');
                 fprintf(fpwr, "%s%c", tempStr, '\t');
                 free(tempStr);
                 list_clear(stringify);
@@ -179,18 +130,7 @@ int truncate(visual *selfp, char *filename) {
             } else {
                 list_append(stringify, (unitype) read, 'c');
             }
-            if (iters > nextThresh) {
-                printf("read %lld/%lld lines\n", iters, fileSize / lineLength); // this is just an estimation, it is not 100% accurate
-                if (threshLoaded <= self.loadingSegmentsI) {
-                    turtleGoto(620 / self.loadingSegmentsI * threshLoaded - 310, 160);
-                    turtlePenUp();
-                    turtlePenDown();
-                }
-                nextThresh += fileSize / self.loadingSegmentsI / lineLength;
-                threshLoaded++;
-                turtleUpdate();
-            }
-            if (iters > 100000) {
+            if (iters > 10000) {
                 printf("truncated file\n");
                 fclose(fpwr);
                 fclose(fp);
@@ -877,9 +817,9 @@ void customCommand2(visual *selfp) {
         int titleIndex = -1;
         int target = atoi(tempStr + 2); // integer position (probably)
         int lowerBound = 0;
-        int upperBound = nameBasics -> data[0].r -> length - 1;
+        int upperBound = actorActors -> data[0].r -> length - 1;
         int check = upperBound / 2;
-        int numAt = atoi(nameBasics -> data[0].r -> data[check].s + 2);
+        int numAt = atoi(actorActors -> data[0].r -> data[check].s + 2);
         while (upperBound >= lowerBound) {
             if (numAt == target) {
                 titleIndex = check;
@@ -890,7 +830,7 @@ void customCommand2(visual *selfp) {
                 lowerBound = check + 1;
             }
             check = lowerBound + (upperBound - lowerBound) / 2;
-            numAt = atoi(nameBasics -> data[0].r -> data[check].s + 2);
+            numAt = atoi(actorActors -> data[0].r -> data[check].s + 2);
             // printf("checking %d %d %d\n", lowerBound, upperBound, check);
         }
         if (titleIndex == -1) {
@@ -900,8 +840,8 @@ void customCommand2(visual *selfp) {
         } else {
             /* gather birth and death years */
             // printf("%s %s\n", nameBasics -> data[2].r -> data[titleIndex].s, nameBasics -> data[3].r -> data[titleIndex].s);
-            list_append(rowList, nameBasics -> data[2].r -> data[titleIndex], 's'); // birth year
-            list_append(rowList, nameBasics -> data[3].r -> data[titleIndex], 's'); // death year
+            list_append(rowList, actorActors -> data[2].r -> data[titleIndex], 's'); // birth year
+            list_append(rowList, actorActors -> data[3].r -> data[titleIndex], 's'); // death year
         }
         
     }
@@ -1006,23 +946,23 @@ void parseRibbonOutput(visual *selfp) {
             if (ribbonRender.output[2] == 1) { // new
                 printf("Custom command\n");
                 // printAllGenres(&self);
-                customCommand(&self);
+                // customCommand(&self);
             }
             if (ribbonRender.output[2] == 2) { // save
                 if (strcmp(win32FileDialog.selectedFilename, "null") == 0) {
                     if (win32FileDialogPrompt(1, "") != -1) {
                         printf("Saved to: %s\n", win32FileDialog.selectedFilename);
-                        export(&self, win32FileDialog.selectedFilename);
+                        truncate(&self, win32FileDialog.selectedFilename);
                     }
                 } else {
                     printf("Saved to: %s\n", win32FileDialog.selectedFilename);
-                    export(&self, win32FileDialog.selectedFilename);
+                    truncate(&self, win32FileDialog.selectedFilename);
                 }
             }
             if (ribbonRender.output[2] == 3) { // save as
                 if (win32FileDialogPrompt(1, "") != -1) {
                     printf("Saved to: %s\n", win32FileDialog.selectedFilename);
-                    export(&self, win32FileDialog.selectedFilename);
+                    truncate(&self, win32FileDialog.selectedFilename);
                 }
             }
             if (ribbonRender.output[2] == 4) { // load
@@ -1125,11 +1065,11 @@ int main(int argc, char *argv[]) {
     // export(&self, "custom2.tsv");
     // printf("completed custom set\n");
 
-    import(&self, "D:\\Characters\\Information\\College\\GeeVis\\actorActor.tsv");
-    import(&self, "D:\\Characters\\Information\\College\\GeeVis\\nameBasics.tsv");
+    // import(&self, "D:\\Characters\\Information\\College\\GeeVis\\actorActor.tsv");
+    // import(&self, "D:\\Characters\\Information\\College\\GeeVis\\nameBasics.tsv");
     // import(&self, "actorActorTruncated.tsv");
     // import(&self, "nameBasicsTruncated.tsv");
-    customCommand(&self);
+    // customCommand(&self);
 
     int frame = 0;
     while (turtle.close == 0) {

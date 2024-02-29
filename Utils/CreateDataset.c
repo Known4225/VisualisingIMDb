@@ -527,6 +527,62 @@ void exportNineDigits(visual *selfp, char *filename) {
     *selfp = self;
 }
 
+// cull all 10 digit names
+void exportNineDigitNames(visual *selfp, char *filename) {
+    printf("opening %s\n", filename);
+    visual self = *selfp;
+    FILE *fp = fopen(filename, "w");
+    /* get rid of all titles that aren't movies
+    datasets[0] - titlePrincipals
+    datasets[1] - titleBasics
+    */
+    list_t *nameBasics = self.datasets -> data[0].r;
+    printf("length: %d\n", nameBasics -> data[0].r -> length);
+    list_t *rowlist = list_init();
+
+    long long numLines = nameBasics -> data[0].r -> length;
+    long long nextThresh = numLines / selfp -> loadingSegmentsE;
+    long long threshLoaded = 0;
+    long long iters = 0;
+    turtlePenColor(0, 0, 0);
+    turtlePenSize(5);
+    turtleGoto(-310, 160);
+    turtlePenDown();
+    turtleGoto(310, 160);
+    turtlePenUp();
+    turtlePenColor(255, 255, 255);
+    turtlePenSize(4);
+    turtleGoto(-310, 160);
+    turtlePenDown();
+    turtleUpdate();
+    for (int i = 1; i < nameBasics -> data[0].r -> length; i++) {
+        if (iters > nextThresh) {
+            printf("wrote %lld/%lld lines\n", iters, numLines); // this is accurate
+            if (threshLoaded <= selfp -> loadingSegmentsE) {
+                turtleGoto(620 / selfp -> loadingSegmentsE * threshLoaded - 310, 160);
+                turtlePenUp();
+                turtlePenDown();
+            }
+            nextThresh += numLines / selfp -> loadingSegmentsE;
+            threshLoaded++;
+            turtleUpdate();
+        }
+        iters++;
+        
+        char *tempStr = nameBasics -> data[0].r -> data[i].s;
+        if (strlen(tempStr) == 9) {
+            list_clear(rowlist);
+            for (int j = 0; j < nameBasics -> length; j++) {
+                list_append(rowlist, nameBasics -> data[j].r -> data[i], 's');
+            }
+            char *toAdd = list_to_string_advanced(rowlist, "\t", 1);
+            fprintf(fp, "%s", toAdd);
+        }
+    }
+    fclose(fp);
+    *selfp = self;
+}
+
 // get all name associations
 void exportNames(visual *selfp, char *filename) {
     printf("opening %s\n", filename);
@@ -920,7 +976,6 @@ void getRatings(double *rating, int *numVotes, visual *selfp, char *movieTitle) 
         // printf("checking %d %d %d\n", lowerBound, upperBound, check);
     }
     if (titleIndex == -1) {
-        // we didn't find this title in titleBasics, skip
         // printf("did not find\n");
         *rating = 0;
         *numVotes = 0;
@@ -1034,14 +1089,102 @@ void addRecognisability(visual *selfp, char *filename) {
     *selfp = self;
 }
 
-// cull all actors with 0 recognisibility score
-void cullZeroRecog(visual *selfp, char *filename) {
+
+void addNameStrings(visual *selfp, char *filename) {
     printf("opening %s\n", filename);
     visual self = *selfp;
     FILE *fp = fopen(filename, "w");
     /* get rid of all titles that aren't movies
-    datasets[0] - titlePrincipals
-    datasets[1] - titleBasics
+    datasets[0] - customSet
+    */
+    list_t *customSet = self.datasets -> data[0].r;
+    list_t *nameBasics = self.datasets -> data[1].r;
+    printf("length: %d\n", customSet -> data[0].r -> length);
+    list_t *rowlist = list_init();
+
+    long long numLines = customSet -> data[0].r -> length;
+    long long nextThresh = numLines / selfp -> loadingSegmentsE;
+    long long threshLoaded = 0;
+    long long iters = 0;
+    turtlePenColor(0, 0, 0);
+    turtlePenSize(5);
+    turtleGoto(-310, 160);
+    turtlePenDown();
+    turtleGoto(310, 160);
+    turtlePenUp();
+    turtlePenColor(255, 255, 255);
+    turtlePenSize(4);
+    turtleGoto(-310, 160);
+    turtlePenDown();
+    turtleUpdate();
+    for (int i = 1; i < customSet -> data[0].r -> length; i++) {
+        if (iters > nextThresh) {
+            printf("wrote %lld/%lld lines\n", iters, numLines); // this is accurate
+            if (threshLoaded <= selfp -> loadingSegmentsE) {
+                turtleGoto(620 / selfp -> loadingSegmentsE * threshLoaded - 310, 160);
+                turtlePenUp();
+                turtlePenDown();
+            }
+            nextThresh += numLines / selfp -> loadingSegmentsE;
+            threshLoaded++;
+            turtleUpdate();
+        }
+        iters++;
+        
+        char *tempStr = customSet -> data[0].r -> data[i].s;
+        list_clear(rowlist);
+        list_append(rowlist, customSet -> data[0].r -> data[i], 's');
+        // binary search
+        int titleIndex = -1;
+        int target = atoi(tempStr + 2); // integer position (probably)
+        int lowerBound = 0;
+        int upperBound = nameBasics -> data[0].r -> length - 1;
+        int check = upperBound / 2;
+        int numAt = atoi(nameBasics -> data[0].r -> data[check].s + 2);
+        while (upperBound >= lowerBound) {
+            if (numAt == target) {
+                titleIndex = check;
+                break;
+            } else if (numAt > target) {
+                upperBound = check - 1;
+            } else {
+                lowerBound = check + 1;
+            }
+            check = lowerBound + (upperBound - lowerBound) / 2;
+            if (check > nameBasics -> data[0].r -> length - 1 || check < 0) {
+                // printf("heyo, check is %d\n", check);
+                // fclose(fp);
+                // exit(-1);
+            } else {
+                numAt = atoi(nameBasics -> data[0].r -> data[check].s + 2);
+            }
+            // printf("checking %d %d %d\n", lowerBound, upperBound, check);
+        }
+        if (titleIndex == -1) {
+            // printf("did not find\n");
+            // printf("couldn't find rating for %s\n", movieTitle);
+            list_append(rowlist, (unitype) "\\N", 's');
+        } else {
+            list_append(rowlist, nameBasics -> data[1].r -> data[titleIndex], 's');
+        }
+        for (int j = 1; j < customSet -> length; j++) {
+            list_append(rowlist, customSet -> data[j].r -> data[i], 's');
+        }
+        char *toAdd = list_to_string_advanced(rowlist, "\t", 1);
+        fprintf(fp, "%s", toAdd);
+    }
+    fclose(fp);
+    *selfp = self;
+}
+
+// cull all actors with 0 recognisibility score
+void cullNonZero(visual *selfp, char *filename) {
+    printf("opening %s\n", filename);
+    visual self = *selfp;
+    FILE *fp = fopen(filename, "w");
+    /* get rid of all titles that aren't movies
+    datasets[0] - customSet
+    datasets[1] - nameBasics
     */
     list_t *customSet = self.datasets -> data[0].r;
     printf("length: %d\n", customSet -> data[0].r -> length);
@@ -1248,8 +1391,11 @@ int main(int argc, char *argv[]) {
     // import(&self, "D:\\Characters\\Information\\College\\GeeVis\\titleRatings.tsv");
     // addRecognisability(&self, "customSet.tsv");
 
-    import(&self, "customSet.tsv");
-    cullZeroRecog(&self, "customSetMini.tsv");
+    import(&self, "customSetMini.tsv");
+    import(&self, "D:\\Characters\\Information\\College\\GeeVis\\nameBasicsNineDigits.tsv");
+    addNameStrings(&self, "customSetMiniNames.tsv");
+    // exportNineDigitNames(&self, "nameBasicsNineDigits");
+
 
     int frame = 0;
     while (turtle.close == 0) {
