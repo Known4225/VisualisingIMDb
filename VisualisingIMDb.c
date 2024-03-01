@@ -5,8 +5,7 @@
 
 /*
 TODO:
-Fix legend
-Hover legend
+
 
 
 
@@ -142,7 +141,7 @@ void init(visual *parentp) {
     visual parent = *parentp;
     parent.parallax = 0;
     parent.renderConnections = 0;
-    parent.renderNamesForConnections = 1;
+    parent.renderNamesForConnections = 0;
     parent.fileList = list_init();
     parent.columns = list_init();
     parent.selectedIDs = list_init();
@@ -198,10 +197,10 @@ void init(visual *parentp) {
         10, 10, 10, // legend bar colour
         10, 10, 10, // timeline base
         230, 230, 230, // timeline ticks/text
-        0, 0, 0,
-        0, 0, 0,
-        0, 0, 0,
-        0, 0, 0,
+        230, 230, 230, // switch on colour
+        150, 150, 150, // switch off colour
+        0, 0, 255, // switch on dot colour
+        255, 0, 0, // switch off dot colour
         0, 0, 0,
         0, 0, 0,
         0, 0, 0 
@@ -516,6 +515,7 @@ void generateNodes(visual *parentp) {
     // double alphaTune = -0.005;
     graph_node_t *canvas = ((graph_node_t *) parent.graphs -> data[0].p);
     list_t *nodeGraph = canvas -> nodes;
+    // printf("max connections: %d\n", maxConnections);
     for (int i = 1; i < nconst -> length; i++) {
         node_t *newNode = malloc(sizeof(node_t));
         newNode -> name = names -> data[i].s;
@@ -523,7 +523,7 @@ void generateNodes(visual *parentp) {
         // newNode -> size = 0.5 / (1 + pow(2.718281, alphaTune * (recognisability -> data[i].d - averageRecognisability)));
         newNode -> size = recognisability -> data[i].d / (averageRecognisability * sqrt(nconst -> length) * 0.1);
         newNode -> xpos = (birthYear -> data[i].i - canvas -> leftYear) * ((double) (canvas -> bounds[2] - canvas -> bounds[0]) / (canvas -> rightYear - canvas -> leftYear)) + canvas -> bounds[0] + ((rand() % 500) / 100.0);
-        newNode -> ypos = (canvas -> bounds[3] - canvas -> bounds[1]) * ((double) (connections -> data[i].r -> length) / maxConnections) + canvas -> bounds[1] + ((rand() % 100) / 400.0);
+        newNode -> ypos = (canvas -> bounds[3] - canvas -> bounds[1]) * ((double) (connections -> data[i].r -> length) / maxConnections) + canvas -> bounds[1] + ((rand() % 100) / (maxConnections / 3.0));
 
         /* colour based on genre */
         newNode -> genre = genre -> data[i].i;
@@ -894,7 +894,7 @@ void renderLegend(visual *parentp) {
     if (1) { // right side
         turtleQuad(self.legendBounds[0], -180, self.legendBounds[1], -180, self.legendBounds[1], 180, self.legendBounds[0], 180, parent.colours[9], parent.colours[10], parent.colours[11], 0);
         turtlePenColor(parent.colours[6], parent.colours[7], parent.colours[8]);
-        textGLWriteString("Legend", 270, 160, 10, 50);
+        textGLWriteString("Legend", (self.legendBounds[0] + self.legendBounds[1]) / 2, 160, 10, 50);
         textGLWriteString("<- Birth Year", 270, -170, 7, 50);
 
         /* render stacked genre bars */
@@ -964,6 +964,79 @@ void renderLegend(visual *parentp) {
         }
         list_free(genreSort);
         list_free(tempList);
+
+
+        turtlePenColor(parent.colours[6], parent.colours[7], parent.colours[8]);
+        textGLWriteString("Render Connections", (self.legendBounds[0] + self.legendBounds[1]) / 2, 0, 5, 50);
+        textGLWriteString("Render Connection Names", (self.legendBounds[0] + self.legendBounds[1]) / 2, -30, 5, 50);
+        textGLWriteString("Starfield", (self.legendBounds[0] + self.legendBounds[1]) / 2, -60, 5, 50);
+
+        double saveprez = turtle.circleprez;
+        turtle.circleprez = 10;
+        if (parent.renderConnections) {
+            turtlePenColor(parent.colours[18], parent.colours[19], parent.colours[20]);
+        } else {
+            turtlePenColor(parent.colours[21], parent.colours[22], parent.colours[23]);
+        }
+        turtlePenSize(10);
+        turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 - 5, -15);
+        turtlePenDown();
+        turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 + 5, -15);
+        turtlePenUp();
+        turtlePenSize(9);
+        if (parent.renderConnections) {
+            turtlePenColor(parent.colours[24], parent.colours[25], parent.colours[26]);
+            turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 + 5, -15);
+        } else {
+            turtlePenColor(parent.colours[27], parent.colours[28], parent.colours[29]);
+            turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 - 5, -15);
+        }
+        turtlePenDown();
+        turtlePenUp();
+
+        if (parent.renderNamesForConnections) {
+            turtlePenColor(parent.colours[18], parent.colours[19], parent.colours[20]);
+        } else {
+            turtlePenColor(parent.colours[21], parent.colours[22], parent.colours[23]);
+        }
+        turtlePenSize(10);
+        turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 - 5, -45);
+        turtlePenDown();
+        turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 + 5, -45);
+        turtlePenUp();
+        turtlePenSize(9);
+        if (parent.renderNamesForConnections) {
+            turtlePenColor(parent.colours[24], parent.colours[25], parent.colours[26]);
+            turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 + 5, -45);
+        } else {
+            turtlePenColor(parent.colours[27], parent.colours[28], parent.colours[29]);
+            turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 - 5, -45);
+        }
+        turtlePenDown();
+        turtlePenUp();
+
+        if (parent.parallax) {
+            turtlePenColor(parent.colours[18], parent.colours[19], parent.colours[20]);
+        } else {
+            turtlePenColor(parent.colours[21], parent.colours[22], parent.colours[23]);
+        }
+        turtlePenSize(10);
+        turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 - 5, -75);
+        turtlePenDown();
+        turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 + 5, -75);
+        turtlePenUp();
+        turtlePenSize(9);
+        if (parent.parallax) {
+            turtlePenColor(parent.colours[24], parent.colours[25], parent.colours[26]);
+            turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 + 5, -75);
+        } else {
+            turtlePenColor(parent.colours[27], parent.colours[28], parent.colours[29]);
+            turtleGoto((self.legendBounds[0] + self.legendBounds[1]) / 2 - 5, -75);
+        }
+        turtlePenDown();
+        turtlePenUp();
+        turtle.circleprez = saveprez;
+       
     }
     *((graph_node_t *) (parent.graphs -> data[0].p)) = self;
     *parentp = parent;
@@ -1034,6 +1107,31 @@ void mouseTick(visual *parentp) {
             } else {
                 self.genreLocked = 0;
                 parent.keys[0] = 3;
+
+                /* check switches */
+                if (parent.mouseX >= 260 && parent.mouseX <= 280) {
+                    if (parent.mouseY >= -20 && parent.mouseY <= -10) {
+                        if (parent.renderConnections) {
+                            parent.renderConnections = 0;
+                        } else {
+                            parent.renderConnections = 1;
+                        }
+                    }
+                    if (parent.mouseY >= -50 && parent.mouseY <= -40) {
+                        if (parent.renderNamesForConnections) {
+                            parent.renderNamesForConnections = 0;
+                        } else {
+                            parent.renderNamesForConnections = 1;
+                        }
+                    }
+                    if (parent.mouseY >= -80 && parent.mouseY <= -70) {
+                        if (parent.parallax) {
+                            parent.parallax = 0;
+                        } else {
+                            parent.parallax = 1;
+                        }
+                    }
+                }
             }
         } else if (parent.keys[0] < 3) {
             self.screenX = (parent.mouseX - self.focalX) / self.globalsize + self.focalCSX;
@@ -1050,6 +1148,8 @@ void mouseTick(visual *parentp) {
                 highlightNode(&parent);
                 if (self.hover == -1 && self.highlight != -1) { // crash protection
                     parent.renderConnections = 0;
+                } else if (self.hover != -1) {
+                    parent.renderConnections = 1;
                 }
                 self.highlight = self.hover;
                 self.genreHighlight = -1;
