@@ -199,8 +199,8 @@ void init(visual *parentp) {
         230, 230, 230, // timeline ticks/text
         230, 230, 230, // switch on colour
         150, 150, 150, // switch off colour
-        0, 0, 255, // switch on dot colour
-        255, 0, 0, // switch off dot colour
+        14, 94, 148, // switch on dot colour
+        204, 0, 0, // switch off dot colour
         0, 0, 0,
         0, 0, 0,
         0, 0, 0 
@@ -816,7 +816,7 @@ void renderGraph(visual *parentp) {
                         }
                         if (calcX + realSize > -330 && calcX - realSize < 330 && calcY + realSize > -190 && calcY - realSize < 190) {
                             turtleGoto(calcX, calcY);
-                            turtlePenColorAlpha(node.colour[0], node.colour[1], node.colour[2], 50);
+                            turtlePenColorAlpha(node.colour[0], node.colour[1], node.colour[2], 80);
                             turtlePenSize(realSize);
                             turtlePenDown();
                             turtlePenUp();
