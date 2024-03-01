@@ -904,6 +904,7 @@ void gatherDoB(visual *selfp, char *filename) {
         
         list_append(rowlist, actorActor -> data[0].r -> data[i], 's');
         list_append(rowlist, actorActor -> data[1].r -> data[i], 's');
+        list_append(rowlist, actorActor -> data[2].r -> data[i], 's');
         char *tempStr = actorActor -> data[0].r -> data[i].s;
         // binary search
         int titleIndex = -1;
@@ -938,7 +939,8 @@ void gatherDoB(visual *selfp, char *filename) {
         } else {
             list_append(rowlist, nameBasics -> data[2].r -> data[titleIndex], 's');
         }
-        list_append(rowlist, actorActor -> data[2].r -> data[i], 's');
+        list_append(rowlist, actorActor -> data[4].r -> data[i], 's');
+        list_append(rowlist, actorActor -> data[5].r -> data[i], 's');
         char *toAdd = list_to_string_advanced(rowlist, "\t", 1);
         fprintf(fp, "%s", toAdd);
     }
@@ -1391,9 +1393,9 @@ int main(int argc, char *argv[]) {
     // import(&self, "D:\\Characters\\Information\\College\\GeeVis\\titleRatings.tsv");
     // addRecognisability(&self, "customSet.tsv");
 
-    import(&self, "customSetMini.tsv");
+    import(&self, "customSetMiniNamesManual99Cap.tsv");
     import(&self, "D:\\Characters\\Information\\College\\GeeVis\\nameBasicsNineDigits.tsv");
-    addNameStrings(&self, "customSetMiniNames.tsv");
+    gatherDoB(&self, "customSetFinal.tsv");
     // exportNineDigitNames(&self, "nameBasicsNineDigits");
 
 

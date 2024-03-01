@@ -1,6 +1,6 @@
 /* select OS */
-// #define OS_WINDOWS
-#define OS_LINUX
+#define OS_WINDOWS
+// #define OS_LINUX
 
 
 /*
@@ -134,6 +134,7 @@ typedef struct {
     double mouseW;
     char parallax;
     char renderConnections;
+    char renderNamesForConnections;
 } visual;
 
 void init(visual *parentp) {
@@ -141,6 +142,7 @@ void init(visual *parentp) {
     visual parent = *parentp;
     parent.parallax = 0;
     parent.renderConnections = 0;
+    parent.renderNamesForConnections = 1;
     parent.fileList = list_init();
     parent.columns = list_init();
     parent.selectedIDs = list_init();
@@ -410,6 +412,7 @@ void generateNodes(visual *parentp) {
     }
     averageRecognisability /= recognisability -> length;
     list_t *connections = parent.columns -> data[5].r; // convert to list
+    int maxConnections = 0; // maximum number of connections
     for (int i = 1; i < connections -> length; i++) {
         if (iters > nextThresh) {
             printf("processed %lld/%i lines\n", iters, connections -> length); // this is just an estimation, it is not 100% accurate
@@ -483,6 +486,9 @@ void generateNodes(visual *parentp) {
                 break;
             }
         }
+        if (runlist -> length > maxConnections) {
+            maxConnections = runlist -> length;
+        }
         /* sort runlist */
         // list_print(runlist);
         for (int k = 1; k < runlist -> length; k += 2) {
@@ -508,7 +514,6 @@ void generateNodes(visual *parentp) {
     }
 
     // double alphaTune = -0.005;
-    double cycle = 0;
     graph_node_t *canvas = ((graph_node_t *) parent.graphs -> data[0].p);
     list_t *nodeGraph = canvas -> nodes;
     for (int i = 1; i < nconst -> length; i++) {
@@ -516,13 +521,9 @@ void generateNodes(visual *parentp) {
         newNode -> name = names -> data[i].s;
         newNode -> ID = i;
         // newNode -> size = 0.5 / (1 + pow(2.718281, alphaTune * (recognisability -> data[i].d - averageRecognisability)));
-        newNode -> size = recognisability -> data[i].d * 0.1 / averageRecognisability;
-        newNode -> xpos = (birthYear -> data[i].i - canvas -> leftYear) * ((double) (canvas -> bounds[2] - canvas -> bounds[0]) / (canvas -> rightYear - canvas -> leftYear)) + canvas -> bounds[0] + (rand() % 10 - 5);
-        if (cycle > (canvas -> maxY + canvas -> bounds[1]) - newNode -> size / 2 * 1.1) {
-            cycle = (canvas -> minY + canvas -> bounds[3]) + newNode -> size / 2 * 1.1;
-        }
-        newNode -> ypos = cycle;
-        cycle += newNode -> size * 1.2;
+        newNode -> size = recognisability -> data[i].d / (averageRecognisability * sqrt(nconst -> length) * 0.1);
+        newNode -> xpos = (birthYear -> data[i].i - canvas -> leftYear) * ((double) (canvas -> bounds[2] - canvas -> bounds[0]) / (canvas -> rightYear - canvas -> leftYear)) + canvas -> bounds[0] + ((rand() % 500) / 100.0);
+        newNode -> ypos = (canvas -> bounds[3] - canvas -> bounds[1]) * ((double) (connections -> data[i].r -> length) / maxConnections) + canvas -> bounds[1] + ((rand() % 100) / 400.0);
 
         /* colour based on genre */
         newNode -> genre = genre -> data[i].i;
@@ -546,6 +547,9 @@ int import(visual *parentp, char *filename) {
     visual parent = *parentp;
     list_clear(parent.columns);
     list_clear(parent.selectedIDs);
+    list_clear(((graph_node_t *) parent.graphs -> data[0].p) -> nodes);
+    list_clear(parent.fileList);
+    // list_clear(parent.graphs);
     /* identify file type
     Supported types:
      - tsv
@@ -696,7 +700,7 @@ void renderConnections(visual *parentp) {
             // printf("iter: %d\n", i);
             if (i == self.highlight || self.highlight == -1) {
                 node_t node = *((node_t *) (self.nodes -> data[i].p));
-                if (self.genreHighlight == -1 || self.genreHighlight == node.genre) {
+                if (self.genreHighlight == -1 || self.genreHighlight == node.genre || i == self.highlight) {
                     double anchorX;
                     double anchorY;
                     if (parent.parallax) {
@@ -709,15 +713,19 @@ void renderConnections(visual *parentp) {
                     if (self.highlight != -1 || (anchorX > -330 && anchorX < 330 && anchorY > -190 && anchorY < 190)) {
                         turtlePenColor(node.colour[0], node.colour[1], node.colour[2]);
                         for (int j = 1; j < node.connections -> length; j += 2) {
-                            if (self.genreHighlight == -1 || self.genreHighlight == ((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> genre) {
+                            node_t *connect = ((node_t *) (self.nodes -> data[node.connections -> data[j].i].p));
+                            if (self.genreHighlight == -1 || self.genreHighlight == connect -> genre) {
                                 double destX;
                                 double destY;
                                 if (parent.parallax) {
-                                    destX = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> xpos + self.screenX) * self.globalsize * ((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> size;
-                                    destY = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> ypos + self.screenY) * self.globalsize * ((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> size;
+                                    destX = (connect -> xpos + self.screenX) * self.globalsize * connect -> size;
+                                    destY = (connect -> ypos + self.screenY) * self.globalsize * connect -> size;
                                 } else {
-                                    destX = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> xpos + self.screenX) * self.globalsize;
-                                    destY = (((node_t *) (self.nodes -> data[node.connections -> data[j].i].p)) -> ypos + self.screenY) * self.globalsize;
+                                    destX = (connect -> xpos + self.screenX) * self.globalsize;
+                                    destY = (connect -> ypos + self.screenY) * self.globalsize;
+                                }
+                                if (i == self.highlight) {
+                                    turtlePenColor(connect -> colour[0], connect -> colour[1], connect -> colour[2]);
                                 }
                                 if (self.highlight == -1) {
                                     turtle.pena = (100 - node.connections -> data[j - 1].i) / 100.0; // scale alpha according to strength of connection
@@ -802,7 +810,7 @@ void renderGraph(visual *parentp) {
                     }
                     double realSize = node.size * 4 * graph.globalsize;
                     /* get hover*/
-                    if (graph.genreHighlight == -1 || graph.genreHighlight == node.genre) {
+                    if (graph.genreHighlight == -1 || graph.genreHighlight == node.genre || i == graph.highlight) {
                         if (parent.mouseX < graph.legendBounds[0] && ((calcX - parent.mouseX) * (calcX - parent.mouseX) + (calcY - parent.mouseY) * (calcY - parent.mouseY) < realSize * realSize * 0.25)) {
                             graph.hover = j;
                         }
@@ -813,7 +821,7 @@ void renderGraph(visual *parentp) {
                             turtlePenDown();
                             turtlePenUp();
                         }
-                        if (realSize > 15 || j == graph.highlight || j == graph.hover) {
+                        if (realSize > 15 || (graph.highlight != -1 && parent.renderNamesForConnections) || j == graph.hover || graph.highlight == j) {
                             if (calcX > -350 && calcX < 350 && calcY > -190 && calcY < 190) {
                                 turtlePenColor(parent.colours[6], parent.colours[7], parent.colours[8]);
                                 textGLWriteUnicode(node.name, calcX, calcY, 5, 50);
@@ -1040,9 +1048,15 @@ void mouseTick(visual *parentp) {
             if (self.focalX == parent.mouseX && self.focalY == parent.mouseY) {
                 /* highlight */
                 highlightNode(&parent);
+                if (self.hover == -1 && self.highlight != -1) { // crash protection
+                    parent.renderConnections = 0;
+                }
                 self.highlight = self.hover;
                 self.genreHighlight = -1;
                 self.genreLocked = 0;
+                // if (parent.selectedIDs -> length > 10000) {
+                //     parent.renderConnections = 0;
+                // }
             }
         }
     }
@@ -1086,6 +1100,18 @@ void hotkeyTick(visual *parentp) {
     } else {
         parent.keys[4] = 0;
     }
+    if (turtleKeyPressed(GLFW_KEY_C)) {
+        if (parent.keys[5] == 0) {
+            parent.keys[5] = 1;
+            if (parent.renderNamesForConnections) {
+                parent.renderNamesForConnections = 0;
+            } else {
+                parent.renderNamesForConnections = 1;
+            }
+        }
+    } else {
+        parent.keys[5] = 0;
+    }
     *((graph_node_t *) parent.graphs -> data[0].p) = self;
     *parentp = parent;
 }
@@ -1108,7 +1134,7 @@ void scrollTick(visual *parentp) {
     }
     if (parent.keys[1] > 0) {
         parent.keys[1]++;
-        if (parent.keys[1] > 20) {
+        if (parent.keys[1] > 15) {
             parent.keys[1] = 0;
         }
     }
@@ -1228,8 +1254,8 @@ int main(int argc, char *argv[]) {
     turtleBgColor(parent.colours[0], parent.colours[1], parent.colours[2]);
     ribbonDarkTheme();
 
-    import(&parent, "customTruncated.tsv");
-    // import(&parent, "customSetMiniNamesManual99Cap.tsv");
+    // import(&parent, "customSetFinalTruncated.tsv");
+    // import(&parent, "customSetFinal.tsv");
 
     if (argc > 1) {
         import(&parent, argv[1]);
@@ -1239,6 +1265,8 @@ int main(int argc, char *argv[]) {
         #ifdef OS_LINUX
         strcpy(zenityFileDialog.selectedFilename, argv[1]);
         #endif
+    } else {
+        import(&parent, "customSetFinalTruncated.tsv");
     }
     int frame = 0;
     while (turtle.close == 0) {
