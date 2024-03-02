@@ -1105,33 +1105,31 @@ void mouseTick(visual *parentp) {
                 self.focalCSX = self.screenX;
                 self.focalCSY = self.screenY;
             } else {
-                self.genreLocked = 0;
-                parent.keys[0] = 3;
-
                 /* check switches */
-                if (parent.mouseX >= 260 && parent.mouseX <= 280) {
-                    if (parent.mouseY >= -20 && parent.mouseY <= -10) {
-                        if (parent.renderConnections) {
-                            parent.renderConnections = 0;
-                        } else {
-                            parent.renderConnections = 1;
-                        }
+                if (parent.mouseX >= 260 && parent.mouseX <= 280 && parent.mouseY >= -20 && parent.mouseY <= -10) {
+                    if (parent.renderConnections) {
+                        parent.renderConnections = 0;
+                    } else {
+                        parent.renderConnections = 1;
                     }
-                    if (parent.mouseY >= -50 && parent.mouseY <= -40) {
-                        if (parent.renderNamesForConnections) {
-                            parent.renderNamesForConnections = 0;
-                        } else {
-                            parent.renderNamesForConnections = 1;
-                        }
+                } else if (parent.mouseX >= 260 && parent.mouseX <= 280 && parent.mouseY >= -50 && parent.mouseY <= -40) {
+                    if (parent.renderNamesForConnections) {
+                        parent.renderNamesForConnections = 0;
+                    } else {
+                        parent.renderNamesForConnections = 1;
                     }
-                    if (parent.mouseY >= -80 && parent.mouseY <= -70) {
-                        if (parent.parallax) {
-                            parent.parallax = 0;
-                        } else {
-                            parent.parallax = 1;
-                        }
+                } else if (parent.mouseX >= 260 && parent.mouseX <= 280 && parent.mouseY >= -80 && parent.mouseY <= -70) {
+                    if (parent.parallax) {
+                        parent.parallax = 0;
+                    } else {
+                        parent.parallax = 1;
                     }
+                } else if (parent.mouseX >= 260 && parent.mouseX <= 280 && parent.mouseY >= -90 && parent.mouseY <= -0) {
+                    // nothing
+                } else {
+                    self.genreLocked = 0;
                 }
+                parent.keys[0] = 3;
             }
         } else if (parent.keys[0] < 3) {
             self.screenX = (parent.mouseX - self.focalX) / self.globalsize + self.focalCSX;
