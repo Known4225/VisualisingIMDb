@@ -1354,9 +1354,6 @@ int main(int argc, char *argv[]) {
     turtleBgColor(parent.colours[0], parent.colours[1], parent.colours[2]);
     ribbonDarkTheme();
 
-    // import(&parent, "customSetFinalTruncated.tsv");
-    // import(&parent, "customSetFinal.tsv");
-
     if (argc > 1) {
         import(&parent, argv[1]);
         #ifdef OS_WINDOWS
@@ -1366,7 +1363,7 @@ int main(int argc, char *argv[]) {
         strcpy(zenityFileDialog.selectedFilename, argv[1]);
         #endif
     } else {
-        import(&parent, "customSetFinalTruncated.tsv");
+        import(&parent, "customSetTruncated.tsv");
     }
     int frame = 0;
     while (turtle.close == 0) {

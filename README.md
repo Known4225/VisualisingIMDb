@@ -9,7 +9,7 @@ https://datasets.imdbws.com
 *** WINDOWS ONLY ***\
 run VisualisingIMDb.exe
 
-File -> Open -> customSetFinal.tsv (for full dataset)
+File -> Open -> customSet.tsv (for full dataset, takes a more powerful computer)
 
 Click on actors to show their connections
 

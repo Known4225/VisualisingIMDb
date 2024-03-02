@@ -477,8 +477,7 @@ void exportNineDigits(visual *selfp, char *filename) {
     visual self = *selfp;
     FILE *fp = fopen(filename, "w");
     /* get rid of all titles that aren't movies
-    datasets[0] - titlePrincipals
-    datasets[1] - titleBasics
+    datasets[0] - any
     */
     list_t *titlePrincipals = self.datasets -> data[0].r;
     printf("length: %d\n", titlePrincipals -> data[0].r -> length);
@@ -533,8 +532,7 @@ void exportNineDigitNames(visual *selfp, char *filename) {
     visual self = *selfp;
     FILE *fp = fopen(filename, "w");
     /* get rid of all titles that aren't movies
-    datasets[0] - titlePrincipals
-    datasets[1] - titleBasics
+    datasets[0] - any
     */
     list_t *nameBasics = self.datasets -> data[0].r;
     printf("length: %d\n", nameBasics -> data[0].r -> length);
@@ -846,6 +844,152 @@ void gatherPrimaryGenre(visual *selfp, char *filename) {
             }
             list_append(rowlist, genreList -> data[maxInd], 's'); // genre
             list_append(rowlist, actorActor -> data[1].r -> data[j], 's');
+
+            char *toAdd = list_to_string_advanced(rowlist, "\t", 1);
+            fprintf(fp, "%s", toAdd);
+            j++;
+            if (j >= actorActor -> data[0].r -> length) {
+                break;
+            }
+        }
+    }
+    fclose(fp);
+    *selfp = self;
+}
+
+void gatherPrimaryGenreDiverse(visual *selfp, char *filename) {
+    printf("opening %s\n", filename);
+
+    list_t *genreList = list_init();
+    list_append(genreList, (unitype) "Drama", 's');
+    list_append(genreList, (unitype) "Documentary", 's');
+    list_append(genreList, (unitype) "Comedy", 's');
+    list_append(genreList, (unitype) "\\N", 's');
+    list_append(genreList, (unitype) "Action", 's');
+    list_append(genreList, (unitype) "Romance", 's');
+    list_append(genreList, (unitype) "Thriller", 's');
+    list_append(genreList, (unitype) "Horror", 's');
+    list_append(genreList, (unitype) "Crime", 's');
+    list_append(genreList, (unitype) "Adventure", 's');
+    list_append(genreList, (unitype) "Family", 's');
+    list_append(genreList, (unitype) "Mystery", 's');
+    list_append(genreList, (unitype) "Biography", 's');
+    list_append(genreList, (unitype) "Fantasy", 's');
+    list_append(genreList, (unitype) "History", 's');
+    list_append(genreList, (unitype) "Sci-Fi", 's');
+    list_append(genreList, (unitype) "Music", 's');
+    list_append(genreList, (unitype) "Musical", 's');
+    list_append(genreList, (unitype) "War", 's');
+    list_append(genreList, (unitype) "Animation", 's');
+    list_append(genreList, (unitype) "Adult", 's');
+    list_append(genreList, (unitype) "Western", 's');
+    list_append(genreList, (unitype) "Sport", 's');
+    list_append(genreList, (unitype) "News", 's');
+    list_append(genreList, (unitype) "Film-Noir", 's');
+    list_append(genreList, (unitype) "Reality-TV", 's');
+    list_append(genreList, (unitype) "Talk-Show", 's');
+    list_append(genreList, (unitype) "Game-Show", 's');
+    list_append(genreList, (unitype) "Short", 's');
+
+    visual self = *selfp;
+    FILE *fp = fopen(filename, "w");
+    /* get rid of all titles that aren't movies
+    datasets[0] - titlePrincipals
+    datasets[1] - titleBasics
+    datasets[2] - actorActor
+    */
+    list_t *titlePrincipals = self.datasets -> data[0].r;
+    printf("length: %d\n", titlePrincipals -> data[0].r -> length);
+    // list_t *titleBasics = self.datasets -> data[1].r;
+    list_t *actorActor = self.datasets -> data[2].r;
+    list_t *output = list_init();
+
+    long long numLines = titlePrincipals -> data[0].r -> length;
+    long long nextThresh = numLines / selfp -> loadingSegmentsE;
+    long long threshLoaded = 0;
+    long long iters = 0;
+    turtlePenColor(0, 0, 0);
+    turtlePenSize(5);
+    turtleGoto(-310, 160);
+    turtlePenDown();
+    turtleGoto(310, 160);
+    turtlePenUp();
+    turtlePenColor(255, 255, 255);
+    turtlePenSize(4);
+    turtleGoto(-310, 160);
+    turtlePenDown();
+    turtleUpdate();
+    for (int i = 0; i < 10000000; i++) {
+        list_append(output, (unitype) list_init(), 'r');
+        for (int j = 0; j < 30; j++) {
+            list_append(output -> data[i].r, (unitype) 0, 'i');
+        }
+    }
+    int j = 1;
+    list_t *runList = list_init();
+    while (j < titlePrincipals -> data[0].r -> length) {
+        if (iters > nextThresh) {
+            printf("wrote %lld/%lld lines\n", iters, numLines); // this is accurate
+            if (threshLoaded <= selfp -> loadingSegmentsE) {
+                turtleGoto(620 / selfp -> loadingSegmentsE * threshLoaded - 310, 160);
+                turtlePenUp();
+                turtlePenDown();
+            }
+            nextThresh += numLines / selfp -> loadingSegmentsE;
+            threshLoaded++;
+            turtleUpdate();
+        }
+        // iters++;
+        
+        char *currentMovie = titlePrincipals -> data[0].r -> data[j].s;
+        char *genres = getGenres(selfp, currentMovie);
+        list_clear(runList);
+        while (j < titlePrincipals -> data[0].r -> length && strcmp(currentMovie, titlePrincipals -> data[0].r -> data[j].s) == 0) {
+            char *tempStr = titlePrincipals -> data[2].r -> data[j].s;
+            list_append(runList, (unitype) tempStr, 's');
+            j++;
+            iters++;
+        }
+        int weight = 3; // first genre listed gets 3 weight, then 2, then 1
+        if (genres != NULL) {
+            char *gen = strtok(genres, ",");
+            while (gen != NULL) {
+                int genreIndex = list_find(genreList, (unitype) gen, 's');
+                if (genreIndex == -1) {
+                    printf("ruh roh, could not find genre %s\n", gen);
+                    genreIndex = 29;
+                }
+                for (int k = 0; k < runList -> length; k++) {
+                    int nameIndex = atoi(runList -> data[k].s + 2);
+                    for (int h = 0; h < weight; h++) {
+                        output -> data[nameIndex].r -> data[genreIndex].i++;
+                    }
+                }
+                gen = strtok(NULL, ",");
+                break; // uncomment to only use first genre in movie
+                weight--;
+            }
+        }
+    }
+    j = 1;
+    list_t *rowlist = list_init();
+    for (int i = 0; i < 10000000; i++) {
+        if (atoi(actorActor -> data[0].r -> data[j].s + 2) == i) {
+            list_clear(rowlist);
+            list_append(rowlist, actorActor -> data[0].r -> data[j], 's');
+            list_append(rowlist, actorActor -> data[1].r -> data[j], 's');
+            int max = 0;
+            int maxInd = 3; // start at null
+            for (int k = 0; k < output -> data[i].r -> length; k++) {
+                if (output -> data[i].r -> data[k].i > max) {
+                    max = output -> data[i].r -> data[k].i;
+                    maxInd = k;
+                }
+            }
+            list_append(rowlist, genreList -> data[maxInd], 's'); // genre
+            list_append(rowlist, actorActor -> data[3].r -> data[j], 's');
+            list_append(rowlist, actorActor -> data[4].r -> data[j], 's');
+            list_append(rowlist, actorActor -> data[5].r -> data[j], 's');
 
             char *toAdd = list_to_string_advanced(rowlist, "\t", 1);
             fprintf(fp, "%s", toAdd);
@@ -1393,10 +1537,18 @@ int main(int argc, char *argv[]) {
     // import(&self, "D:\\Characters\\Information\\College\\GeeVis\\titleRatings.tsv");
     // addRecognisability(&self, "customSet.tsv");
 
-    import(&self, "customSetMiniNamesManual99Cap.tsv");
-    import(&self, "D:\\Characters\\Information\\College\\GeeVis\\nameBasicsNineDigits.tsv");
-    gatherDoB(&self, "customSetFinal.tsv");
+    // import(&self, "customSetMiniNamesManual99Cap.tsv");
+    // import(&self, "D:\\Characters\\Information\\College\\GeeVis\\nameBasicsNineDigits.tsv");
+    // gatherDoB(&self, "customSetFinal.tsv");
     // exportNineDigitNames(&self, "nameBasicsNineDigits");
+    // import(&self, "D:\\Characters\\Information\\College\\GeeVis\\titleBasics.tsv");
+    // exportNineDigitNames(&self, "titleBasicsNineDigits.tsv");
+
+    import(&self, "D:\\Characters\\Information\\College\\GeeVis\\titlePrincipalsOnlyMovieActorsNineDigits.tsv");
+    import(&self, "D:\\Characters\\Information\\College\\GeeVis\\titleBasicsNineDigits.tsv");
+    import(&self, "customSetFinal.tsv");
+
+    gatherPrimaryGenreDiverse(&self, "customSetFirstGenre.tsv");
 
 
     int frame = 0;
