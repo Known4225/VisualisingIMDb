@@ -1462,6 +1462,161 @@ void cullNonZero(visual *selfp, char *filename) {
     *selfp = self;
 }
 
+// connection length number will be as many digits as needed
+void reduceConnectionLength(visual *selfp, char *filename) {
+    printf("opening %s\n", filename);
+    visual self = *selfp;
+    FILE *fp = fopen(filename, "w");
+    /*
+    datasets[0] - customSet
+    */
+    list_t *customSet = self.datasets -> data[0].r;
+    printf("length: %d\n", customSet -> data[0].r -> length);
+    list_t *rowlist = list_init();
+    list_t *sublist = list_init();
+
+    long long numLines = customSet -> data[0].r -> length;
+    long long nextThresh = numLines / selfp -> loadingSegmentsE;
+    long long threshLoaded = 0;
+    long long iters = 0;
+    turtlePenColor(0, 0, 0);
+    turtlePenSize(5);
+    turtleGoto(-310, 160);
+    turtlePenDown();
+    turtleGoto(310, 160);
+    turtlePenUp();
+    turtlePenColor(255, 255, 255);
+    turtlePenSize(4);
+    turtleGoto(-310, 160);
+    turtlePenDown();
+    turtleUpdate();
+    for (int i = 1; i < customSet -> data[0].r -> length; i++) {
+        if (iters > nextThresh) {
+            printf("wrote %lld/%lld lines\n", iters, numLines); // this is accurate
+            if (threshLoaded <= selfp -> loadingSegmentsE) {
+                turtleGoto(620 / selfp -> loadingSegmentsE * threshLoaded - 310, 160);
+                turtlePenUp();
+                turtlePenDown();
+            }
+            nextThresh += numLines / selfp -> loadingSegmentsE;
+            threshLoaded++;
+            turtleUpdate();
+        }
+        iters++;
+        
+        list_clear(rowlist);
+        for (int j = 0; j < customSet -> length - 1; j++) {
+            list_append(rowlist, customSet -> data[j].r -> data[i], 's');
+        }
+        
+        list_clear(sublist);
+        char *tempStr = customSet -> data[5].r -> data[i].s;
+        char *num = strtok(tempStr, ",");
+        while (num != NULL) {
+            // printf("%s\n", num);
+            if (num[0] == '0') {
+                char temp[5];
+                sprintf(temp, "%d", atoi(num));
+                list_append(sublist, (unitype) temp, 's');
+            } else {
+                list_append(sublist, (unitype) num, 's');
+            }
+            num = strtok(NULL, ",");
+        }
+        list_append(rowlist, (unitype) list_to_string_advanced(sublist, ",", 0), 's');
+        char *toAdd = list_to_string_advanced(rowlist, "\t", 1);
+        // printf("%s\n", toAdd);
+        fprintf(fp, "%s", toAdd);
+    }
+    fclose(fp);
+    *selfp = self;
+}
+
+// connection length number will be as many digits as needed, and name const will be reduced
+void reduceFileSize(visual *selfp, char *filename) {
+    printf("opening %s\n", filename);
+    visual self = *selfp;
+    FILE *fp = fopen(filename, "w");
+    /*
+    datasets[0] - customSet
+    */
+    list_t *customSet = self.datasets -> data[0].r;
+    printf("length: %d\n", customSet -> data[0].r -> length);
+    list_t *rowlist = list_init();
+    list_t *sublist = list_init();
+
+    long long numLines = customSet -> data[0].r -> length;
+    long long nextThresh = numLines / selfp -> loadingSegmentsE;
+    long long threshLoaded = 0;
+    long long iters = 0;
+    turtlePenColor(0, 0, 0);
+    turtlePenSize(5);
+    turtleGoto(-310, 160);
+    turtlePenDown();
+    turtleGoto(310, 160);
+    turtlePenUp();
+    turtlePenColor(255, 255, 255);
+    turtlePenSize(4);
+    turtleGoto(-310, 160);
+    turtlePenDown();
+    turtleUpdate();
+    for (int i = 1; i < customSet -> data[0].r -> length; i++) {
+        if (iters > nextThresh) {
+            printf("wrote %lld/%lld lines\n", iters, numLines); // this is accurate
+            if (threshLoaded <= selfp -> loadingSegmentsE) {
+                turtleGoto(620 / selfp -> loadingSegmentsE * threshLoaded - 310, 160);
+                turtlePenUp();
+                turtlePenDown();
+            }
+            nextThresh += numLines / selfp -> loadingSegmentsE;
+            threshLoaded++;
+            turtleUpdate();
+        }
+        iters++;
+        
+        list_clear(rowlist);
+        char *tempStr = customSet -> data[0].r -> data[i].s;
+        if (tempStr[3] == '0') {
+            int h = 4;
+            while (tempStr[h] != '\0') {
+                tempStr[h - 1] = tempStr[h];
+                h++;
+            }
+            tempStr[h - 1] = '\0';
+        }
+        list_append(rowlist, (unitype) tempStr, 's');
+        for (int j = 1; j < customSet -> length - 1; j++) {
+            list_append(rowlist, customSet -> data[j].r -> data[i], 's');
+        }
+        
+        list_clear(sublist);
+        tempStr = customSet -> data[5].r -> data[i].s;
+        
+        char *num = strtok(tempStr, ",");
+        while (num != NULL) {
+            // printf("%s\n", num);
+            if (num[0] == 'n') {
+                char temp[12];
+                temp[0] = 'n';
+                temp[1] = 'm';
+                sprintf(temp + 2, "%d", atoi(num + 2));
+                list_append(sublist, (unitype) temp, 's');
+            } else {
+                char temp[5];
+                sprintf(temp, "%d", atoi(num));
+                list_append(sublist, (unitype) temp, 's');
+            }
+            num = strtok(NULL, ",");
+        }
+        list_append(rowlist, (unitype) list_to_string_advanced(sublist, ",", 0), 's');
+        char *toAdd = list_to_string_advanced(rowlist, "\t", 1);
+        // printf("%s\n", toAdd);
+        fprintf(fp, "%s", toAdd);
+    }
+    fclose(fp);
+    *selfp = self;
+}
+
 void mouseTick(visual *selfp) {
 
 }
@@ -1655,12 +1810,13 @@ int main(int argc, char *argv[]) {
     // import(&self, "customSetNames.tsv");
     // cullNonZero(&self, "customSetNamesNonZero.tsv");
 
-    import(&self, "D:\\Characters\\Information\\College\\GeeVis\\titlePrincipalsSortedOnlyMovieActors.tsv");
-    import(&self, "D:\\Characters\\Information\\College\\GeeVis\\titleBasicsSorted.tsv");
-    import(&self, "customSetNamesNonZero.tsv");
-    gatherPrimaryGenre(&self, "customSetGenre.tsv");
+    // import(&self, "D:\\Characters\\Information\\College\\GeeVis\\titlePrincipalsSortedOnlyMovieActors.tsv");
+    // import(&self, "D:\\Characters\\Information\\College\\GeeVis\\titleBasicsSorted.tsv");
+    // import(&self, "customSetNamesNonZero.tsv");
+    // gatherPrimaryGenre(&self, "customSetGenre.tsv");
 
-    
+    import(&self, "customSet.tsv");
+    reduceFileSize(&self, "customSetReduced.tsv");
 
 
     int frame = 0;

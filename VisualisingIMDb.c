@@ -392,10 +392,17 @@ void generateNodes(visual *parentp) {
     list_t *birthYear = parent.columns -> data[3].r; // convert to integers
     for (int i = 1; i < birthYear -> length; i++) {
         char *toFree = birthYear -> data[i].s;
-        int calc;
-        sscanf(toFree, "%d", &calc);
-        birthYear -> type[i] = 'i';
-        birthYear -> data[i].i = calc;
+        if (strcmp(toFree, "\\N") == 0) {
+            // if not found, make it 2030 so it's obvious that it's wrong
+            birthYear -> type[i] = 'i';
+            birthYear -> data[i].i = 2030;
+            // printf("birth year of actor %d not found\n");
+        } else {
+            int calc;
+            sscanf(toFree, "%d", &calc);
+            birthYear -> type[i] = 'i';
+            birthYear -> data[i].i = calc;
+        }
         free(toFree);
     }
     double averageRecognisability = 0;
@@ -425,25 +432,23 @@ void generateNodes(visual *parentp) {
             turtleUpdate();
         }
         iters++;
-        char *toFree = connections -> data[i].s;
+        char *toFree = strtok(connections -> data[i].s, ",");
         list_t *runlist = list_init();
-        int j = -1;
         while (1) {
             int connectionStrength;
-            if (j == -1 || toFree[j] == ',') {
-                if (strlen(toFree) < 2) {
-                    printf("problem in dataset: line %d\n", i);
-                }
-                sscanf(toFree + j + 1, "%d", &connectionStrength);
+            if (toFree != NULL) {
+                // if (strlen(toFree) < 2) {
+                //     printf("problem in dataset: line %d\n", i);
+                // }
+                connectionStrength = atoi(toFree);
                 // printf("connection strength: %d\n", connectionStrength);
                 // list_append(runlist, (unitype) connectionStrength, 'i'); // hold off on adding it yet until we know if the person exists
-                j += 4;
+                toFree = strtok(NULL, ",");
             } else {
                 break;
             }
-            if (toFree[j] == ',') {
-                int nameConst;
-                sscanf(toFree + j + 3, "%d", &nameConst);
+            if (toFree != NULL) {
+                int nameConst = atoi(toFree + 2);
                 // printf("nameConst: %d\n", nameConst);
                 int nameIndex = -1;
                 int target = nameConst;
@@ -480,9 +485,9 @@ void generateNodes(visual *parentp) {
                     list_append(runlist, (unitype) connectionStrength, 'i'); // add strength
                     list_append(runlist, (unitype) (nameIndex - 1), 'i'); // add ID
                 }
-                j += 10;
+                toFree = strtok(NULL, ",");
             } else {
-                printf("this should never happen %d %d %s\n", i, j, toFree);
+                printf("this should never happen %d %s\n", i, toFree);
                 break;
             }
         }
@@ -508,6 +513,9 @@ void generateNodes(visual *parentp) {
             runlist -> data[k - 1].i = temp2;
         }
         // list_print(runlist);
+        if (runlist -> length % 2 == 1) {
+            list_print(runlist);
+        }
         connections -> type[i] = 'r';
         connections -> data[i].r = runlist;
         free(toFree);
@@ -522,7 +530,7 @@ void generateNodes(visual *parentp) {
         newNode -> name = names -> data[i].s;
         newNode -> ID = i;
         // newNode -> size = 0.5 / (1 + pow(2.718281, alphaTune * (recognisability -> data[i].d - averageRecognisability)));
-        newNode -> size = recognisability -> data[i].d / (averageRecognisability * sqrt(nconst -> length) * 0.1);
+        newNode -> size = recognisability -> data[i].d / (averageRecognisability * sqrt(nconst -> length) * 0.2);
         newNode -> xpos = (birthYear -> data[i].i - canvas -> leftYear) * ((double) (canvas -> bounds[2] - canvas -> bounds[0]) / (canvas -> rightYear - canvas -> leftYear)) + canvas -> bounds[0] + ((rand() % 500) / 100.0);
         newNode -> ypos = (canvas -> bounds[3] - canvas -> bounds[1]) * ((double) (connections -> data[i].r -> length) / maxConnections) + canvas -> bounds[1] + ((rand() % 100) / (maxConnections / 3.0));
 
@@ -643,7 +651,7 @@ int import(visual *parentp, char *filename) {
     index = 0;
     lineLength = ftello(fp) / 1; /*  we use the first row to estimate the number of lines, but this is not optimal.
     It's really just dependends on how representative the first row is of the lengths of all the others */
-    lineLength = 45278400 / 185146; // hardcoded value
+    lineLength = 88824399 / 492121; // hardcoded value (file size / number of lines)
     nextThresh = fileSize / parent.loadingSegments / lineLength;
     read = '\0';
     
@@ -815,7 +823,7 @@ void renderGraph(visual *parentp) {
                         if (parent.mouseX < graph.legendBounds[0] && ((calcX - parent.mouseX) * (calcX - parent.mouseX) + (calcY - parent.mouseY) * (calcY - parent.mouseY) < realSize * realSize * 0.25)) {
                             graph.hover = j;
                         }
-                        if (calcX + realSize > -330 && calcX - realSize < 330 && calcY + realSize > -190 && calcY - realSize < 190) {
+                        if (calcX + realSize > -330 && calcX - realSize < 270 && calcY + realSize > -190 && calcY - realSize < 190) {
                             turtleGoto(calcX, calcY);
                             turtlePenColorAlpha(node.colour[0], node.colour[1], node.colour[2], 80);
                             turtlePenSize(realSize);
