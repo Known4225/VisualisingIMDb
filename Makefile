@@ -1,7 +1,7 @@
 all:
-	gcc VisualisingIMDb.c -L./Windows -lglfw3 -lopengl32 -lgdi32 -lglad -lole32 -luuid -o VisualisingIMDb.exe
-lin:
-	gcc VisualisingIMDb.c -L./Linux -lglfw3 -ldl -lm -lX11 -lglad -lGL -lGLU -lpthread -o VisualisingIMDb.o
+	gcc VisualisingIMDb.c -L./Linux -lglfw3 -ldl -lm -lX11 -lglad -lGL -lGLU -lpthread -DOS_LINUX -o VisualisingIMDb.o
+win:
+	gcc VisualisingIMDb.c -L./Windows -lglfw3 -lopengl32 -lgdi32 -lglad -lole32 -luuid -DOS_WINDOWS -o VisualisingIMDb.exe
 trunc:
 	gcc TruncateFile.c -L./Windows -lglfw3 -lopengl32 -lgdi32 -lglad -lole32 -luuid -o TruncateFile.exe
 trunclin:

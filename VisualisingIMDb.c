@@ -1,5 +1,5 @@
 /* select OS */
-#define OS_WINDOWS
+// #define OS_WINDOWS
 // #define OS_LINUX
 
 
@@ -1250,44 +1250,96 @@ void scrollTick(visual *parentp) {
 }
 
 void parseRibbonOutput(visual *selfp) {
-    #ifdef OS_WINDOWS
     visual self = *selfp;
     if (ribbonRender.output[0] == 1) {
         ribbonRender.output[0] = 0; // untoggle
         if (ribbonRender.output[1] == 0) { // file
+            #ifdef OS_WINDOWS
             if (ribbonRender.output[2] == 1) { // new
                 printf("New file created\n");
-                // clearAll(&self);
-                // strcpy(win32FileDialog.selectedFilename, "null");
+                strcpy(win32FileDialog.selectedFilename, "null");
             }
             if (ribbonRender.output[2] == 2) { // save
                 if (strcmp(win32FileDialog.selectedFilename, "null") == 0) {
                     if (win32FileDialogPrompt(1, "") != -1) {
-                        // printf("Saved to: %s\n", win32FileDialog.selectedFilename);
-                        // export(&self, win32FileDialog.selectedFilename);
+                        printf("Saved to: %s\n", win32FileDialog.selectedFilename);
+                        export(&self, win32FileDialog.selectedFilename);
                     }
                 } else {
-                    // printf("Saved to: %s\n", win32FileDialog.selectedFilename);
-                    // export(&self, win32FileDialog.selectedFilename);
+                    printf("Saved to: %s\n", win32FileDialog.selectedFilename);
+                    export(&self, win32FileDialog.selectedFilename);
                 }
             }
             if (ribbonRender.output[2] == 3) { // save as
                 if (win32FileDialogPrompt(1, "") != -1) {
-                    // printf("Saved to: %s\n", win32FileDialog.selectedFilename);
-                    // export(&self, win32FileDialog.selectedFilename);
+                    printf("Saved to: %s\n", win32FileDialog.selectedFilename);
+                    export(&self, win32FileDialog.selectedFilename);
                 }
             }
             if (ribbonRender.output[2] == 4) { // load
                 if (win32FileDialogPrompt(0, "") != -1) {
                     // printf("Loaded data from: %s\n", win32FileDialog.selectedFilename);
-                    // clearAll(&self);
                     import(&self, win32FileDialog.selectedFilename);
                 }
             }
+            #endif
+            #ifdef OS_LINUX
+            if (ribbonRender.output[2] == 1) { // new
+                printf("New file created\n");
+                strcpy(zenityFileDialog.selectedFilename, "null");
+            }
+            if (ribbonRender.output[2] == 2) { // save
+                if (strcmp(zenityFileDialog.selectedFilename, "null") == 0) {
+                    if (zenityFileDialogPrompt(1, "") != -1) {
+                        printf("Saved to: %s\n", zenityFileDialog.selectedFilename);
+                        export(&self, zenityFileDialog.selectedFilename);
+                    }
+                } else {
+                    printf("Saved to: %s\n", zenityFileDialog.selectedFilename);
+                    export(&self, zenityFileDialog.selectedFilename);
+                }
+            }
+            if (ribbonRender.output[2] == 3) { // save as
+                if (zenityFileDialogPrompt(1, "") != -1) {
+                    printf("Saved to: %s\n", zenityFileDialog.selectedFilename);
+                    export(&self, zenityFileDialog.selectedFilename);
+                }
+            }
+            if (ribbonRender.output[2] == 4) { // load
+                if (zenityFileDialogPrompt(0, "") != -1) {
+                    // printf("Loaded data from: %s\n", zenityFileDialog.selectedFilename);
+                    import(&self, zenityFileDialog.selectedFilename);
+                }
+            }
+            #endif
+        }
+        if (ribbonRender.output[1] == 1) { // edit
+            if (ribbonRender.output[2] == 1) { // undo
+
+            }
+            if (ribbonRender.output[2] == 2) { // redo
+
+            }
+            if (ribbonRender.output[2] == 3) { // cut
+
+            }
+            if (ribbonRender.output[2] == 4) { // copy
+
+            }
+            if (ribbonRender.output[2] == 5) { // paste
+
+            }
+        }
+        if (ribbonRender.output[1] == 2) { // view
+            if (ribbonRender.output[2] == 1) { // appearance
+                printf("appearance settings\n");
+            } 
+            if (ribbonRender.output[2] == 2) { // GLFW
+                printf("GLFW settings\n");
+            } 
         }
     }
     *selfp = self;
-    #endif
 }
 
 int main(int argc, char *argv[]) {
@@ -1312,15 +1364,15 @@ int main(int argc, char *argv[]) {
     /* initialise FileDialog */
     #ifdef OS_WINDOWS
     win32ToolsInit();
-    win32FileDialogAddExtension("txt"); // add txt to extension restrictions
-    win32FileDialogAddExtension("csv"); // add csv to extension restrictions
+    // win32FileDialogAddExtension("txt"); // add txt to extension restrictions
+    // win32FileDialogAddExtension("csv"); // add csv to extension restrictions
     win32FileDialogAddExtension("tsv"); // add tsv to extension restrictions
     char constructedPath[MAX_PATH + 1];
     #endif
     #ifdef OS_LINUX
     zenityFileDialogInit(argv[0]); // must include argv[0] to get executableFilepath
-    zenityFileDialogAddExtension("txt"); // add txt to extension restrictions
-    zenityFileDialogAddExtension("lg"); // add lg to extension restrictions
+    // zenityFileDialogAddExtension("txt"); // add txt to extension restrictions
+    zenityFileDialogAddExtension("tsv"); // add lg to extension restrictions
     char constructedPath[4097];
     #endif
 
