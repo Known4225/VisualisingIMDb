@@ -531,7 +531,7 @@ void generateNodes(visual *parentp) {
         newNode -> ID = i;
         // newNode -> size = 0.5 / (1 + pow(2.718281, alphaTune * (recognisability -> data[i].d - averageRecognisability)));
         newNode -> size = recognisability -> data[i].d / (averageRecognisability * sqrt(nconst -> length) * 0.2);
-        newNode -> xpos = (birthYear -> data[i].i - canvas -> leftYear) * ((double) (canvas -> bounds[2] - canvas -> bounds[0]) / (canvas -> rightYear - canvas -> leftYear)) + canvas -> bounds[0] + ((rand() % 500) / 100.0);
+        newNode -> xpos = (birthYear -> data[i].i - canvas -> leftYear) * ((double) (canvas -> bounds[2] - canvas -> bounds[0]) / (canvas -> rightYear - canvas -> leftYear)) + canvas -> bounds[0] + ((rand() % 460) / 100.0);
         newNode -> ypos = (canvas -> bounds[3] - canvas -> bounds[1]) * ((double) (connections -> data[i].r -> length) / maxConnections) + canvas -> bounds[1] + ((rand() % 100) / (maxConnections / 3.0));
 
         /* colour based on genre */
