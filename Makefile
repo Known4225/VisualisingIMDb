@@ -7,7 +7,7 @@ trunc:
 trunclin:
 	gcc TruncateFile.c -L./Linux -lglfw3 -ldl -lm -lX11 -lglad -lGL -lGLU -lpthread -g -Wall -o TruncateFile.o
 data:
-	gcc CreateDataset.c -L./Windows -lglfw3 -lopengl32 -lgdi32 -lglad -lole32 -luuid -Wall -o CreateDataset.exe
+	gcc CreateDatasetNew.c -L./Windows -lglfw3 -lopengl32 -lgdi32 -lglad -lole32 -luuid -Wall -o CreateDatasetNew.exe
 datalin:
 	gcc CreateDataset.c -L./Linux -lglfw3 -ldl -lm -lX11 -lglad -lGL -lGLU -lpthread -O3 -Wall -o CreateDataset.o
 val:

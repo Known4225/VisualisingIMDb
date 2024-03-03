@@ -437,7 +437,7 @@ void generateNodes(visual *parentp) {
                 sscanf(toFree + j + 1, "%d", &connectionStrength);
                 // printf("connection strength: %d\n", connectionStrength);
                 // list_append(runlist, (unitype) connectionStrength, 'i'); // hold off on adding it yet until we know if the person exists
-                j += 3;
+                j += 4;
             } else {
                 break;
             }
@@ -476,6 +476,7 @@ void generateNodes(visual *parentp) {
                     We will simply not include them */
                     // list_append(runlist, (unitype) -1, 'i');
                 } else {
+                    // printf("added %d\n", (nameIndex - 1));
                     list_append(runlist, (unitype) connectionStrength, 'i'); // add strength
                     list_append(runlist, (unitype) (nameIndex - 1), 'i'); // add ID
                 }
