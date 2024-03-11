@@ -169,7 +169,7 @@ void init(visual *parentp) {
     graph -> globalsize = 14;
     graph -> screenX = -152;
     graph -> screenY = 20;
-    graph -> scrollSpeed = 1.05;
+    graph -> scrollSpeed = 1.08;
     graph -> hover = -1;
 
     /* graph */
@@ -1256,21 +1256,20 @@ void scrollTick(visual *parentp) {
     visual parent = *parentp;
     parent.mouseW = turtleMouseWheel();
     graph_node_t self = *((graph_node_t *) parent.graphs -> data[0].p);
-    double scrollScale = 1;
+    double scrollScale = 1.3 * self.scrollSpeed;
     if (turtleKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
-        scrollScale = 1.3;
+        scrollScale = 1 * self.scrollSpeed;
     }
-    self.scrollSpeed *= scrollScale;
     if (parent.mouseW > 0) {
-        self.screenX -= (turtle.mouseX * (-1 / self.scrollSpeed + 1)) / self.globalsize;
-        self.screenY -= (turtle.mouseY * (-1 / self.scrollSpeed + 1)) / self.globalsize;
-        self.globalsize *= self.scrollSpeed;
+        self.screenX -= (turtle.mouseX * (-1 / scrollScale + 1)) / self.globalsize;
+        self.screenY -= (turtle.mouseY * (-1 / scrollScale + 1)) / self.globalsize;
+        self.globalsize *= scrollScale;
         parent.keys[1] = 1;
     }
     if (parent.mouseW < 0) {
-        self.globalsize /= self.scrollSpeed;
-        self.screenX += (turtle.mouseX * (-1 / self.scrollSpeed + 1)) / self.globalsize;
-        self.screenY += (turtle.mouseY * (-1 / self.scrollSpeed + 1)) / self.globalsize;
+        self.globalsize /= scrollScale;
+        self.screenX += (turtle.mouseX * (-1 / scrollScale + 1)) / self.globalsize;
+        self.screenY += (turtle.mouseY * (-1 / scrollScale + 1)) / self.globalsize;
         parent.keys[1] = 1;
     }
     if (parent.keys[1] > 0) {
@@ -1279,7 +1278,6 @@ void scrollTick(visual *parentp) {
             parent.keys[1] = 0;
         }
     }
-    self.scrollSpeed /= scrollScale;
     *((graph_node_t *) parent.graphs -> data[0].p) = self;
     *parentp = parent;
 }
@@ -1387,7 +1385,7 @@ int main(int argc, char *argv[]) {
 
     /* Create a windowed mode window and its OpenGL context */
     const GLFWvidmode *monitorSize = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    int windowHeight = monitorSize -> height * 0.85;
+    int windowHeight = monitorSize -> height * 0.83;
     window = glfwCreateWindow(windowHeight * 16 / 9, windowHeight, "IMDb Actor Graph", NULL, NULL);
     if (!window) {
         glfwTerminate();
