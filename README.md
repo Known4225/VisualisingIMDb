@@ -25,6 +25,9 @@ Note: Actors that don't have their date of birth listed will all be shoved in 20
 That's why there's a ton of people there, they are not actually from the future.
 
 Keybinds:\
+Click and drag - Move the view\
+Arrow keys - Move the view (hold shift to go faster)\
+A - View all\
 W - Toggle connection rendering\
 C - Toggle connection names\
 Space - toggle starfield view

@@ -166,10 +166,10 @@ void init(visual *parentp) {
     graph -> nodes = list_init();
 
     /* spacial parameters */
-    graph -> globalsize = 5;
-    graph -> screenX = -100;
-    graph -> screenY = 0;
-    graph -> scrollSpeed = 1.15;
+    graph -> globalsize = 14;
+    graph -> screenX = -152;
+    graph -> screenY = 20;
+    graph -> scrollSpeed = 1.05;
     graph -> hover = -1;
 
     /* graph */
@@ -1219,6 +1219,35 @@ void hotkeyTick(visual *parentp) {
     } else {
         parent.keys[5] = 0;
     }
+    int arrowSpeed = 5;
+    if (turtleKeyPressed(GLFW_KEY_UP)) {
+        if (turtleKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+            self.screenY -= arrowSpeed * 5 / self.globalsize;
+        } else {
+            self.screenY -= arrowSpeed / self.globalsize;
+        }
+    }
+    if (turtleKeyPressed(GLFW_KEY_DOWN)) {
+        if (turtleKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+            self.screenY += arrowSpeed * 5 / self.globalsize;
+        } else {
+            self.screenY += arrowSpeed / self.globalsize;
+        }
+    }
+    if (turtleKeyPressed(GLFW_KEY_RIGHT)) {
+        if (turtleKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+            self.screenX -= arrowSpeed * 5 / self.globalsize;
+        } else {
+            self.screenX -= arrowSpeed / self.globalsize;
+        }
+    }
+    if (turtleKeyPressed(GLFW_KEY_LEFT)) {
+        if (turtleKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+            self.screenX += arrowSpeed * 5 / self.globalsize;
+        } else {
+            self.screenX += arrowSpeed / self.globalsize;
+        }
+    }
     *((graph_node_t *) parent.graphs -> data[0].p) = self;
     *parentp = parent;
 }
@@ -1227,6 +1256,11 @@ void scrollTick(visual *parentp) {
     visual parent = *parentp;
     parent.mouseW = turtleMouseWheel();
     graph_node_t self = *((graph_node_t *) parent.graphs -> data[0].p);
+    double scrollScale = 1;
+    if (turtleKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+        scrollScale = 1.3;
+    }
+    self.scrollSpeed *= scrollScale;
     if (parent.mouseW > 0) {
         self.screenX -= (turtle.mouseX * (-1 / self.scrollSpeed + 1)) / self.globalsize;
         self.screenY -= (turtle.mouseY * (-1 / self.scrollSpeed + 1)) / self.globalsize;
@@ -1245,6 +1279,7 @@ void scrollTick(visual *parentp) {
             parent.keys[1] = 0;
         }
     }
+    self.scrollSpeed /= scrollScale;
     *((graph_node_t *) parent.graphs -> data[0].p) = self;
     *parentp = parent;
 }
