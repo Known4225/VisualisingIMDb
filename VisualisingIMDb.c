@@ -1256,9 +1256,9 @@ void scrollTick(visual *parentp) {
     visual parent = *parentp;
     parent.mouseW = turtleMouseWheel();
     graph_node_t self = *((graph_node_t *) parent.graphs -> data[0].p);
-    double scrollScale = 1.3 * self.scrollSpeed;
+    double scrollScale = 1.07 * self.scrollSpeed;
     if (turtleKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
-        scrollScale = 1 * self.scrollSpeed;
+        scrollScale = 0.97 * self.scrollSpeed;
     }
     if (parent.mouseW > 0) {
         self.screenX -= (turtle.mouseX * (-1 / scrollScale + 1)) / self.globalsize;
