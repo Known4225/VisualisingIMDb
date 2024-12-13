@@ -21,6 +21,12 @@ File -> Open -> customSet.tsv (for full dataset, takes a more powerful computer)
 
 Click on actors to show their connections
 
+Metrics:
+- Size of bubble - Actor recognisability (calculated by sqrt(number of movies) * average rating)
+- Colour of bubble - Genre
+- X axis - Date of birth
+- Y axis - Number of connections
+
 Note: Actors that don't have their date of birth listed will all be shoved in 2030.\
 That's why there's a ton of people there, they are not actually from the future.
 
