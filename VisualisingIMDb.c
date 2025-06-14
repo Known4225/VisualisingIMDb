@@ -182,7 +182,7 @@ void init(visual *parentp) {
     graph -> bounds[3] = 100;
     graph -> legendBounds[0] = 220;
     graph -> legendBounds[1] = 320;
-    graph ->leftYear = 1870;
+    graph -> leftYear = 1870;
     graph -> rightYear = 2005;
 
     list_append(parent.graphs, (unitype) (void *) graph, 'p');
