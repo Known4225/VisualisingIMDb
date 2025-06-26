@@ -37,3 +37,9 @@ A - View all\
 W - Toggle connection rendering\
 C - Toggle connection names\
 Space - toggle starfield view
+
+# Images
+
+![SamuelLJackson](images/SamuelLJackson.png)
+
+![Sridevi](images/Sridevi.png)
