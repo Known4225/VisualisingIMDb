@@ -6,6 +6,9 @@ https://developer.imdb.com/non-commercial-datasets
 https://datasets.imdbws.com
 
 ## Usage
+
+This project shows what actors have been in movies together. This dataset only considers movies not TV shows or other media.
+
 ### Windows
 run VisualisingIMDb.exe
 
@@ -41,5 +44,6 @@ Space - toggle starfield view
 # Images
 
 ![SamuelLJackson](images/SamuelLJackson.png)
+
 
 ![Sridevi](images/Sridevi.png)
