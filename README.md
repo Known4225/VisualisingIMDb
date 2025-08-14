@@ -7,7 +7,7 @@ https://datasets.imdbws.com
 
 ## Usage
 
-This project shows what actors have been in movies together. This dataset only considers movies not TV shows or other media.
+This project shows what actors have been in movies together. This dataset only considers movies not TV shows or other media. You also cannot see the name of the movie that they share which would've been a nice feature.
 
 ### Windows
 run VisualisingIMDb.exe
@@ -47,3 +47,4 @@ Space - toggle starfield view
 
 
 ![Sridevi](images/Sridevi.png)
+
